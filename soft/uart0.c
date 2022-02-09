@@ -1,12 +1,12 @@
-/*------------------------------------------------*/
-/* UART functions for ATmega48/88/168/328         */
-/*------------------------------------------------*/
+/*---------------------------------------------------------*/
+/* UART functions for ATmega164A/PA/324A/PA/644A/PA/1284/P */
+/*---------------------------------------------------------*/
 
 
 #include <avr/interrupt.h>
-#include "uart.h"
+#include "uart0.h"
 
-#define	UART_BAUD		4800
+#define	UART0_BAUD		9600
 #define	USE_TXINT		0
 #define	SZ_FIFO			512
 
@@ -33,26 +33,26 @@ volatile FIFO TxFifo;
 
 /* Initialize UART */
 
-void uart_init (void)
+void uart0_init (void)
 {
 	UCSR0B = 0;
 
-	PORTD |= _BV(1); DDRD |= _BV(1);	/* Set TXD as output */
-	DDRD &= ~_BV(0); PORTD &= ~_BV(0); 	/* Set RXD as input */
+	PORTD |= _BV(PD1); DDRD |= _BV(PD1);	/* Set TXD as output */
+	DDRD &= ~_BV(PD0); PORTD &= ~_BV(PD0); 	/* Set RXD as input */
 
 	RxFifo.ct = 0; RxFifo.ri = 0; RxFifo.wi = 0;
 #if USE_TXINT
 	TxFifo.ct = 0; TxFifo.ri = 0; TxFifo.wi = 0;
 #endif
 
-	UBRR0L = F_CPU / UART_BAUD / 16 - 1;
+	UBRR0L = F_CPU / UART0_BAUD / 16 - 1;
 	UCSR0B = _BV(RXEN0) | _BV(RXCIE0) | _BV(TXEN0);
 }
 
 
 /* Deinitialize UART */
 
-void uart_deinit (void)
+void uart0_deinit (void)
 {
 	UCSR0B = 0;
 }
@@ -60,13 +60,13 @@ void uart_deinit (void)
 
 /* Get a received character */
 
-uint8_t uart_test (void)
+uint8_t uart0_test (void)
 {
 	return RxFifo.ct;
 }
 
 
-uint8_t uart_get (void)
+uint8_t uart0_get (void)
 {
 	uint8_t d;
 	idx_t i;
@@ -88,7 +88,7 @@ uint8_t uart_get (void)
 
 /* Put a character to transmit */
 
-void uart_put (uint8_t d)
+void uart0_put (uint8_t d)
 {
 #if USE_TXINT
 	idx_t i;
@@ -111,7 +111,7 @@ void uart_put (uint8_t d)
 
 
 /* USART0 RXC interrupt */
-ISR(USART_RX_vect)
+ISR(USART0_RX_vect)
 {
 	uint8_t d;
 	idx_t i;

@@ -2,12 +2,12 @@
 PROJECT	= glg
 
 ### Source files and search directory
-CSRC    = main.c uart.c ff.c mmc.c
-ASRC    = suart.S xitoa.S stime.S
+CSRC    = main.c uart0.c uart1.c ff.c mmc.c
+ASRC    = xitoa.S stime.S
 VPATH   =
 
 ### Target device
-DEVICE  = atmega328p
+DEVICE  = atmega644pa
 
 ### Optimization level (0, 1, 2, 3, 4 or s)
 OPTIMIZE = s
@@ -19,7 +19,7 @@ CSTD = gnu89
 LIBS	=
 LIBDIRS	=
 INCDIRS	=
-DEFS	= F_CPU=9216000
+DEFS	= F_CPU=8000000
 # DEFS	+= LEDR_UART
 ADEFS	=
 
@@ -123,7 +123,7 @@ version :
 # Display size of file.
 size:
 	@echo
-	$(SIZE) -C --mcu=$(DEVICE) $(PROJECT).elf
+	$(SIZE) $(PROJECT).elf
 
 
 # Link: create ELF output file from object files.
