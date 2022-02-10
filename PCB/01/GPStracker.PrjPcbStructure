@@ -1,0 +1,5 @@
+Record=TopLevelDocument|FileName=MAIN.SchDoc|SheetNumber=1
+Record=SheetSymbol|SourceDocument=MAIN.SchDoc|Designator=gps|SchDesignator=gps|FileName=GPS.SchDoc|SheetNumber=3|SymbolType=Normal|RawFileName=GPS.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
+Record=SheetSymbol|SourceDocument=MAIN.SchDoc|Designator=lcd|SchDesignator=lcd|FileName=LCD.SchDoc|SheetNumber=5|SymbolType=Normal|RawFileName=LCD.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
+Record=SheetSymbol|SourceDocument=MAIN.SchDoc|Designator=sd|SchDesignator=sd|FileName=SD.SchDoc|SheetNumber=2|SymbolType=Normal|RawFileName=SD.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
+Record=SheetSymbol|SourceDocument=MAIN.SchDoc|Designator=up|SchDesignator=up|FileName=uP.SchDoc|SheetNumber=4|SymbolType=Normal|RawFileName=uP.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol|RevisionGUID= |ItemGUID= |VaultGUID= 
