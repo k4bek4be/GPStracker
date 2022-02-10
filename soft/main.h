@@ -63,7 +63,7 @@
 #define ERROR_I2C	1
 #define ERROR_I2C_TIMEOUT	2
 
-#define ms(x) (x/100)
+#define ms(x) (x/10)
 
 struct timers {
 	unsigned int owire;
@@ -73,7 +73,7 @@ struct timers {
 
 struct system_s {
 	struct timers timers;
-	unsigned int global_error;	
+	unsigned int global_error;
 };
 
 extern volatile struct system_s System;
