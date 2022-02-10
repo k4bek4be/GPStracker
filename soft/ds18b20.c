@@ -1,5 +1,5 @@
 /*
- * ds18b20.c
+ * ds18b20.c - single sensor support
  * k4be 2019
  * License: BSD
  */ 
@@ -19,12 +19,13 @@ union {
 #define MAX_ERRORS 5
 
 unsigned char temp_ok;
-float hs_temp;
+signed int ds18b20_temp;
 
 void gettemp(void){
 	unsigned char i, crc=0, tmp;
 	static unsigned char error_cnt;
 	unsigned char temp_ok_out = 0;
+	signed int temp;
 
 	if(System.timers.owire) return;
 
@@ -45,7 +46,10 @@ void gettemp(void){
 	}
 	if(!crc){
 		if(t.owbuffer[0] != 0x50 || t.owbuffer[1] != 0x05 || t.owbuffer[5] != 0xff || t.owbuffer[7] != 0x10){
-			hs_temp = (float)t.t * 0.0625;
+			temp = t.t;
+			temp *= (int)(0.625*16);
+			temp >>= 4;
+			ds18b20_temp = temp;
 			temp_ok_out = 1;
 		}
 	}

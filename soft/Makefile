@@ -13,7 +13,7 @@ DEVICE  = atmega644pa
 OPTIMIZE = s
 
 ### C Standard level (c89, gnu89, c99 or gnu99)
-CSTD = gnu89
+CSTD = c99
 
 ### Include dirs, library dirs and definitions
 LIBS	=

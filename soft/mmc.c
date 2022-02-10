@@ -4,26 +4,20 @@
 
 #include <avr/io.h>
 #include "diskio.h"
+#include "main.h"
 
 
 /* Port controls  (Platform dependent) */
-#ifdef LEDR_UART	/* Disable card access indicator when red LED is used as debug output */
-#define LEDR_ON()
-#define LEDR_OFF()
-#else
-#define LEDR_ON()	PORTB &= ~_BV(1)
-#define LEDR_OFF()	PORTB |= _BV(1)
-#endif
 
-#define CS_LOW()	{PORTB &= ~_BV(2); LEDR_ON();}	/* CS=low, LED on */
-#define	CS_HIGH()	{PORTB |= _BV(2); LEDR_OFF();}	/* CS=high, LED off */
-#define POWER_ON()	PORTC &= ~_BV(0)	/* MMC power on */
-#define POWER_OFF()	PORTC |= _BV(0)		/* MMC power off */
-#define POWER		(!(PINC & _BV(0)))	/* Test for power state.   on:true, off:false */
-#define SOCKINS		(!(PIND & _BV(7)))	/* Test for card exist.    yes:true, true:false, default:true */
-#define SOCKWP		0					/* Test for write protect. yes:true, no:false, default:false */
-#define	FCLK_SLOW()	SPCR = 0x52		/* Set slow clock (F_CPU / 64) */
-#define	FCLK_FAST()	SPCR = 0x50		/* Set fast clock (F_CPU / 2) */
+#define CS_LOW()	{SD_CS_PORT &= ~SD_CS; LEDR_ON();}	/* CS=low, LED on */
+#define	CS_HIGH()	{SD_CS_PORT |= SD_CS; LEDR_OFF();}	/* CS=high, LED off */
+#define POWER_ON()	{SD_PWROFF_PORT &= ~SD_PWROFF;}	/* MMC power on */
+#define POWER_OFF()	{SD_PWROFF_PORT |= SD_PWROFF;}		/* MMC power off */
+#define POWER		(!(SD_PWROFF_PIN & SD_PWROFF))	/* Test for power state.   on:true, off:false */
+#define SOCKINS		(!(SD_CD_PIN & SD_CD))	/* Test for card exist.    yes:true, true:false, default:true */
+#define SOCKWP		(SD_WP_PIN & SD_WP)		/* Test for write protect. yes:true, no:false, default:false */
+#define	FCLK_SLOW()	SPCR = _BV(MSTR) | _BV(SPE) | _BV(SPR1) | _BV(SPR0)	/* Set slow clock (F_CPU / 64) */
+#define	FCLK_FAST()	SPCR = _BV(MSTR) | _BV(SPE)							/* Set fast clock (F_CPU / 2) */
 
 
 /*--------------------------------------------------------------------------
@@ -80,11 +74,8 @@ void power_off (void)
 {
 	SPCR = 0;				/* Disable SPI function */
 
-	DDRD  &= 0b01111111;	/* Set SCK/MOSI/CS to hi-z, INS# as pull-up */
-	PORTD |= 0b10000000;
-	DDRB  &= 0b11000011;
-	PORTB |= 0b11000011;
-
+	DDRB  &= ~(_BV(PB5) | _BV(PB7));	/* Set SCK/MOSI to hi-z */
+	SD_CS_DDR &= ~SD_CS;
 	POWER_OFF();
 	Stat |= STA_NOINIT;
 }
@@ -92,15 +83,21 @@ void power_off (void)
 static
 void power_on (void)	/* Apply power sequence */
 {
-	for (Timer1 = 30; Timer1; ) ;	/* 300ms */
+	for (Timer1 = 30; Timer1; ) {};	/* 300ms */
 	POWER_ON();						/* Power on */
-	for (Timer1 = 3; Timer1; ) ;	/* 30ms */
+	for (Timer1 = 3; Timer1; ) {};	/* 30ms */
 
-	PORTB = (PORTB & 0b11011111) | 0b00001100;	/* Configure SCK/MOSI/CS as output */
-	DDRB  = (DDRB  & 0b11101111) | 0b00101100;
+	SD_CS_PORT |= SD_CS;
+	SD_CS_DDR |= SD_CS;
 
-	SPCR = 0x52;	/* Enable SPI function in mode 0 */
-	SPSR = 0x01;	/* SPI 2x mode */
+	SD_PWROFF_PORT |= SD_PWROFF;
+	SD_PWROFF_DDR |= SD_PWROFF;
+
+	PORTB |= _BV(PB5) | _BV(PB7);	/* Configure SCK/MOSI as output */
+	DDRB  |= _BV(PB5) | _BV(PB7);
+
+	FCLK_SLOW();	/* Enable SPI function in mode 0 */
+	SPSR = _BV(SPI2X);	/* SPI 2x mode */
 }
 
 
@@ -463,7 +460,7 @@ DRESULT disk_write (
 DRESULT disk_ioctl (
 	BYTE drv,		/* Physical drive nmuber (0) */
 	BYTE ctrl,		/* Control code */
-	void *buff		/* Buffer to send/receive control data */
+	void *buff __attribute((unused))	/* Buffer to send/receive control data */
 )
 {
 	DRESULT res;

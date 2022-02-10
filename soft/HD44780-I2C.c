@@ -1,22 +1,22 @@
 /*-------------------------------------------------------------------------------------------------
- * Wyúwietlacz alfanumeryczny ze sterownikiem HD44780
- * Sterowanie w trybie 8-bitowym z odczytem flagi zajÍtoúci
- * Plik : HD44780.c	
+ * Wy≈õwietlacz alfanumeryczny ze sterownikiem HD44780
+ * Sterowanie w trybie 8-bitowym z odczytem flagi zajƒôto≈õci
+ * Plik : HD44780-I2C.c	
  * Mikrokontroler : Atmel AVR
  * Kompilator : avr-gcc
- * Autor : Rados≥aw KwiecieÒ
- * èrÛd≥o : http://radzio.dxp.pl/hd44780/
+ * Autor : Rados≈Çaw Kwiecie≈Ñ
+ * ≈πr√≥d≈Ço : http://radzio.dxp.pl/hd44780/
  * Data : 24.03.2007
  * Modified: k4be, 2022 (I2C access mode)
  * ------------------------------------------------------------------------------------------------ */
 
-#include "HD44780.h"
+#include "HD44780-I2C.h"
 #include <avr/pgmspace.h>
 
 
 //-------------------------------------------------------------------------------------------------
 //
-// Funkcja zapisu bajtu do wyúwietacza (bez rozrÛønienia instrukcja/dane).
+// Funkcja zapisu bajtu do wy≈õwietacza (bez rozr√≥≈ºnienia instrukcja/dane).
 //
 //-------------------------------------------------------------------------------------------------
 void _LCD_Write(unsigned char dataToWrite)
@@ -31,7 +31,7 @@ void _LCD_Write(unsigned char dataToWrite)
 }
 //-------------------------------------------------------------------------------------------------
 //
-// Funkcja odczytu bajtu z wyúwietacza (bez rozrÛønienia instrukcja/dane).
+// Funkcja odczytu bajtu z wy≈õwietacza (bez rozr√≥≈ºnienia instrukcja/dane).
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ unsigned char _LCD_Read(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-// Funkcja zapisu rozkazu do wyúwietlacza
+// Funkcja zapisu rozkazu do wy≈õwietlacza
 //
 //-------------------------------------------------------------------------------------------------
 void LCD_WriteCommand(unsigned char commandToWrite)
@@ -69,11 +69,10 @@ unsigned char LCD_ReadStatus(void)
 {
 	expander_set_bit(LCD_RS_PORT, LCD_RS, 0);
 	return _LCD_Read();
-	return 0;
 }
 //-------------------------------------------------------------------------------------------------
 //
-// Funkcja zapisu danych do pamiÍci wyúwietlacza
+// Funkcja zapisu danych do pamiƒôci wy≈õwietlacza
 //
 //-------------------------------------------------------------------------------------------------
 void LCD_WriteData(unsigned char dataToWrite)
@@ -84,7 +83,7 @@ void LCD_WriteData(unsigned char dataToWrite)
 }
 //-------------------------------------------------------------------------------------------------
 //
-// Funkcja odczytu danych z pamiÍci wyúwietlacza
+// Funkcja odczytu danych z pamiƒôci wy≈õwietlacza
 //
 //-------------------------------------------------------------------------------------------------
 unsigned char LCD_ReadData(void)
@@ -94,7 +93,7 @@ unsigned char LCD_ReadData(void)
 }
 //-------------------------------------------------------------------------------------------------
 //
-// Funkcja wyúwietlenia napisu na wyswietlaczu.
+// Funkcja wy≈õwietlenia napisu na wyswietlaczu.
 //
 //-------------------------------------------------------------------------------------------------
 void LCD_WriteText(const char * text)
@@ -111,7 +110,7 @@ void LCD_WriteTextP(const char *text)
 }
 //-------------------------------------------------------------------------------------------------
 //
-// Funkcja ustawienia wspÛ≥rzÍdnych ekranowych
+// Funkcja ustawienia wsp√≥≈Çrzƒôdnych ekranowych
 //
 //-------------------------------------------------------------------------------------------------
 void LCD_GoTo(unsigned char x, unsigned char y)
@@ -120,7 +119,7 @@ void LCD_GoTo(unsigned char x, unsigned char y)
 }
 //-------------------------------------------------------------------------------------------------
 //
-// Funkcja czyszczenia ekranu wyúwietlacza.
+// Funkcja czyszczenia ekranu wy≈õwietlacza.
 //
 //-------------------------------------------------------------------------------------------------
 void LCD_Clear(void)
@@ -130,7 +129,7 @@ void LCD_Clear(void)
 }
 //-------------------------------------------------------------------------------------------------
 //
-// Funkcja przywrÛcenia poczπtkowych wspÛ≥rzÍdnych wyúwietlacza.
+// Funkcja przywr√≥cenia poczƒÖtkowych wsp√≥≈Çrzƒôdnych wy≈õwietlacza.
 //
 //-------------------------------------------------------------------------------------------------
 void LCD_Home(void)
@@ -143,7 +142,7 @@ void LCD_Home(void)
 // Procedura inicjalizacji kontrolera HD44780.
 //
 //-------------------------------------------------------------------------------------------------
-void LCD_Initalize(void)
+void LCD_Initialize(void)
 {
 	unsigned char i;
 	LCD_DATA_OUTPUT();
@@ -151,11 +150,11 @@ void LCD_Initalize(void)
 	expander_set_bit_no_send(LCD_RS_PORT, LCD_RS, 0); // wyzerowanie linii RS
 	expander_set_bit_no_send(LCD_E_PORT, LCD_E, 0);  // wyzerowanie linii E
 	expander_set_bit(LCD_RW_PORT, LCD_RW, 0);
-	_delay_ms(100); // oczekiwanie na ustalibizowanie siÍ napiecia zasilajacego
+	_delay_ms(100); // oczekiwanie na ustalibizowanie siƒô napiecia zasilajacego
 
 	exp_output[0] = 0x3F;
 	expander_write(0);
-	for(i = 0; i < 3; i++) // trzykrotne powtÛrzenie bloku instrukcji
+	for(i = 0; i < 3; i++) // trzykrotne powt√≥rzenie bloku instrukcji
 	{
 	  expander_set_bit(LCD_E, LCD_E, 1);
 	  expander_set_bit(LCD_E, LCD_E, 0);
@@ -163,10 +162,10 @@ void LCD_Initalize(void)
 	}
 
 	LCD_WriteCommand(HD44780_FUNCTION_SET | HD44780_FONT5x7 | HD44780_TWO_LINE | HD44780_8_BIT); // interfejs 4-bity, 2-linie, znak 5x7
-	LCD_WriteCommand(HD44780_DISPLAY_ONOFF | HD44780_DISPLAY_OFF); // wy≥πczenie wyswietlacza
-	//LCD_WriteCommand(HD44780_CLEAR); // czyszczenie zawartosÊi pamieci DDRAM
+	LCD_WriteCommand(HD44780_DISPLAY_ONOFF | HD44780_DISPLAY_OFF); // wy≈ÇƒÖczenie wyswietlacza
+	//LCD_WriteCommand(HD44780_CLEAR); // czyszczenie zawartos√¶i pamieci DDRAM
 	LCD_WriteCommand(HD44780_ENTRY_MODE | HD44780_EM_SHIFT_CURSOR | HD44780_EM_INCREMENT);// inkrementaja adresu i przesuwanie kursora
-	LCD_WriteCommand(HD44780_DISPLAY_ONOFF | HD44780_DISPLAY_ON | HD44780_CURSOR_OFF | HD44780_CURSOR_NOBLINK); // w≥πcz LCD, bez kursora i mrugania
+	LCD_WriteCommand(HD44780_DISPLAY_ONOFF | HD44780_DISPLAY_ON | HD44780_CURSOR_OFF | HD44780_CURSOR_NOBLINK); // w≈ÇƒÖcz LCD, bez kursora i mrugania
 }
 
 //-------------------------------------------------------------------------------------------------

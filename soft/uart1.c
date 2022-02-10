@@ -7,7 +7,7 @@
 #include "uart1.h"
 
 #define	UART1_BAUD		9600
-#define	USE_TXINT		0
+#define	USE_TXINT		1
 #define	SZ_FIFO			512
 
 

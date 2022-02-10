@@ -1,13 +1,16 @@
-//-------------------------------------------------------------------------------------------------
-// Wyúwietlacz alfanumeryczny ze sterownikiem HD44780
-// Sterowanie w trybie 8-bitowym z odczytem flagi zajÍtoúci
-// Plik : HD44780.h	
-// Mikrokontroler : Atmel AVR
-// Kompilator : avr-gcc
-// Autor : Rados≥aw KwiecieÒ
-// èrÛd≥o : http://radzio.dxp.pl/hd44780/
-// Data : 24.03.2007
-//-------------------------------------------------------------------------------------------------
+/*-------------------------------------------------------------------------------------------------
+ * Wy≈õwietlacz alfanumeryczny ze sterownikiem HD44780
+ * Sterowanie w trybie 8-bitowym z odczytem flagi zajƒôto≈õci
+ * Plik : HD44780-I2C.h
+ * Mikrokontroler : Atmel AVR
+ * Kompilator : avr-gcc
+ * Autor : Rados≈Çaw Kwiecie≈Ñ
+ * ≈πr√≥d≈Ço : http://radzio.dxp.pl/hd44780/
+ * Data : 24.03.2007
+ * Modified: k4be, 2022 (I2C access mode)
+ * ------------------------------------------------------------------------------------------------ */
+
+#pragma once
 
 #include <avr/io.h>
 #include <util/delay.h>
@@ -15,8 +18,8 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-// Konfiguracja sygna≥Ûw sterujπcych wyúwietlaczem.
-// Moøna zmieniÊ stosownie do potrzeb.
+// Konfiguracja sygna≈Ç√≥w sterujƒÖcych wy≈õwietlaczem.
+// Mo≈ºna zmieni√¶ stosownie do potrzeb.
 //
 //-------------------------------------------------------------------------------------------------
 #define LCD_RS_PORT 	1
@@ -87,7 +90,7 @@ void LCD_WriteText(const char *);
 void LCD_GoTo(unsigned char, unsigned char);
 void LCD_Clear(void);
 void LCD_Home(void);
-void LCD_Initalize(void);
+void LCD_Initialize(void);
 void LCD_WriteTextP(const char *);
 
 //-------------------------------------------------------------------------------------------------
