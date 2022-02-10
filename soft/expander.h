@@ -44,10 +44,15 @@
 
 #define EXPANDER_COUNT 1 // number of expanders (contiguous addresses)
 
+extern unsigned char exp_output[EXPANDER_COUNT*2];
+
 void expander_init(unsigned char addr, unsigned char p1in, unsigned char p2in);
+void expander_set_dir(unsigned char addr, unsigned char p1in, unsigned char p2in);
 unsigned int expander_read(unsigned char addr);
+unsigned int expander_read_byte(unsigned char addr, unsigned char reg);
 void expander_write(unsigned char addr);
 void expander_write_all(void);
 void expander_set_bit(unsigned char port, unsigned char val, unsigned char on);
+void expander_set_bit_no_send(unsigned char port, unsigned char val, unsigned char on);
 
 #endif /* EXPANDER_H_ */

@@ -23,6 +23,6 @@ unsigned int I2C_SendOneCommandByte(unsigned char command);
 unsigned int I2C_ReceiveOneCommandByte(unsigned char *command, unsigned char ack);
 unsigned int I2C_WaitForTWInt(void);
 unsigned int I2C_Receive_n_bytes(unsigned char address, unsigned char command, unsigned char *data, unsigned int length);
-unsigned int I2C_Send_n_bytes(unsigned char address,unsigned char command, unsigned char *data, unsigned int length);
+unsigned int I2C_Send_n_bytes(unsigned char address,unsigned char command, const unsigned char *data, unsigned int length);
 
 #endif /* I2C_H_ */

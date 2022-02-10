@@ -11,6 +11,7 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
+#include "expander.h"
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -18,21 +19,17 @@
 // Mo¿na zmieniæ stosownie do potrzeb.
 //
 //-------------------------------------------------------------------------------------------------
-#define LCD_RS_DIR		DDRA
-#define LCD_RS_PORT 	PORTA
-#define LCD_RS			(1 << PA2)
+#define LCD_RS_PORT 	1
+#define LCD_RS			(1 << 3)
 
-#define LCD_RW_DIR		DDRA
-#define LCD_RW_PORT		PORTA
-#define LCD_RW			(1 << PA1)
+#define LCD_RW_PORT		1
+#define LCD_RW			(1 << 2)
 
-#define LCD_E_DIR		DDRA
-#define LCD_E_PORT		PORTA
-#define LCD_E			(1 << PA0)
+#define LCD_E_PORT		1
+#define LCD_E			(1 << 1)
 
-#define LCD_DATA_DIR	DDRB
-#define LCD_DATA_PORT	PORTB
-#define LCD_DATA_PIN	PINB
+#define LCD_DATA_OUTPUT() 	expander_set_dir(0, 0x00, 0x00)
+#define LCD_DATA_INPUT() 	expander_set_dir(0, 0xFF, 0x00)
 
 //-------------------------------------------------------------------------------------------------
 //

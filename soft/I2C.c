@@ -184,7 +184,7 @@ unsigned int I2C_WaitForTWInt(void){
 	unsigned char count = 20;
 	while (count && !(TWCR & (1<<TWINT))){
 		count--;
-		_delay_us(10);
+		_delay_us(6);
 	}
 	if(count == 0) return ERROR_I2C_TIMEOUT;
 
