@@ -9,9 +9,23 @@
 #include "I2C.h"
 #include "main.h"
 
+#define I2C_FREQ	400000
+
+#define	PRESCALER	1 /* possible values: 1, 4, 16, 64 */
+
 void I2C_init(void){
-	TWBR = 18;
+	TWBR = (F_CPU/I2C_FREQ - 16.0)/2.0/PRESCALER;
+#if PRESCALER == 1
 	TWSR |= 0;
+#elif	PRESCALER == 4
+	TWSR |= _BV(TWPS0);
+#elif PRESCALER == 16
+	TWSR |= _BV(TWPS1);
+#elif PRESCALER == 64
+	TWSR |= _BV(TWPS1) | _BV(TWPS0);
+#else
+#error Invalid prescaler
+#endif
 }
 
 /* two byte command (or command + value) */
@@ -141,7 +155,7 @@ unsigned int I2C_Receive_n_bytes(unsigned char address, unsigned char command, u
 unsigned int I2C_ReceiveCommand3byte(unsigned char address, unsigned char command, unsigned char *data0, unsigned char *data1)
 {
 	unsigned int error = ERROR_I2C;
-	unsigned char addressTrash;
+	unsigned char _unused;
 	for(int index = 0 ; (index < MAX_REPEAT_I2C) && (error != ERROR_NO); index++)
 	{
 		error = 0;
@@ -155,7 +169,7 @@ unsigned int I2C_ReceiveCommand3byte(unsigned char address, unsigned char comman
 		TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
 		error |= I2C_WaitForTWInt();
 
-		error |= I2C_ReceiveOneCommandByte(&addressTrash, 0);
+		error |= I2C_ReceiveOneCommandByte(&_unused, 0);
 		error |= I2C_ReceiveOneCommandByte(data0, 0);
 		error |= I2C_ReceiveOneCommandByte(data1, 0);
 		
@@ -181,10 +195,10 @@ unsigned int I2C_ReceiveOneCommandByte(unsigned char *command, unsigned char ack
 }
 
 unsigned int I2C_WaitForTWInt(void){
-	unsigned char count = 20;
+	unsigned char count = 10;
 	while (count && !(TWCR & (1<<TWINT))){
 		count--;
-		_delay_us(6);
+		_delay_us(1000000.0/I2C_FREQ*10); /* wait for 10 bit periods; the transaction never succeeds quicker */
 	}
 	if(count == 0) return ERROR_I2C_TIMEOUT;
 

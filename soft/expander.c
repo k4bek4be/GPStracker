@@ -12,15 +12,20 @@
 #include <avr/io.h>
 
 unsigned char exp_output[EXPANDER_COUNT*2];
+unsigned char directions[EXPANDER_COUNT*2];
 
 void expander_init(unsigned char addr, unsigned char p1in, unsigned char p2in){
 	addr += EXPANDER_ADDR;
 	expander_write_all();
-	expander_set_dir(addr, p1in, p2in);
+	System.global_error |= I2C_SendCommand3byte(addr, CMD_PORT0_CONFIG, p1in, p2in);
 }
 
 void expander_set_dir(unsigned char addr, unsigned char p1in, unsigned char p2in){
+	if(p1in == directions[addr*2] && p2in == directions[addr*2 + 1])
+			return; /* no change needed, save one transaction */
 	System.global_error |= I2C_SendCommand3byte(addr, CMD_PORT0_CONFIG, p1in, p2in);
+	directions[addr*2] = p1in;
+	directions[addr*2 + 1] = p2in;
 }
 
 unsigned int expander_read(unsigned char addr){

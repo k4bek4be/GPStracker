@@ -34,6 +34,9 @@
 #define LCD_DATA_OUTPUT() 	expander_set_dir(0, 0x00, 0x00)
 #define LCD_DATA_INPUT() 	expander_set_dir(0, 0xFF, 0x00)
 
+
+#undef LCD_WAIT_FOR_READY /* typically not needed, I2C bus is slow enough */
+
 //-------------------------------------------------------------------------------------------------
 //
 // Instrukcje kontrolera Hitachi HD44780

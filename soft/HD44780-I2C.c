@@ -57,7 +57,9 @@ void LCD_WriteCommand(unsigned char commandToWrite)
 {
 	expander_set_bit(LCD_RS_PORT, LCD_RS, 0);
 	_LCD_Write(commandToWrite);
+#ifdef LCD_WAIT_FOR_READY
 	while(LCD_ReadStatus()&0x80);
+#endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -79,7 +81,9 @@ void LCD_WriteData(unsigned char dataToWrite)
 {
 	expander_set_bit(LCD_RS_PORT, LCD_RS, 1);
 	_LCD_Write(dataToWrite);
+#ifdef LCD_WAIT_FOR_READY
 	while(LCD_ReadStatus()&0x80);
+#endif
 }
 //-------------------------------------------------------------------------------------------------
 //
