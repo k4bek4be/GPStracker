@@ -2,8 +2,8 @@
 PROJECT	= glg
 
 ### Source files and search directory
-CSRC    = main.c uart0.c uart1.c ff.c mmc.c 1wire.c ds18b20.c expander.c HD44780-I2C.c I2C.c
-ASRC    = xitoa.S stime.S
+CSRC    = main.c uart0.c uart1.c ff.c mmc.c 1wire.c ds18b20.c expander.c HD44780-I2C.c I2C.c xprintf.c
+ASRC    = stime.S
 VPATH   =
 
 ### Target device
@@ -13,7 +13,7 @@ DEVICE  = atmega644pa
 OPTIMIZE = s
 
 ### C Standard level (c89, gnu89, c99 or gnu99)
-CSTD = c99
+#CSTD = c99
 
 ### Include dirs, library dirs and definitions
 LIBS	=
@@ -52,7 +52,7 @@ PROJECT   := $(OBJDIR)/$(PROJECT)
 
 
 # Flags for C files
-CFLAGS += -std=$(CSTD)
+#CFLAGS += -std=$(CSTD)
 CFLAGS += -g$(DEBUG)
 CFLAGS += -mmcu=$(DEVICE)
 CFLAGS += -O$(OPTIMIZE) -mcall-prologues

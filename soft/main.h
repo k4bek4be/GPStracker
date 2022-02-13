@@ -57,11 +57,24 @@
 #define	F_POW	0x80		/* Power */
 #define	F_GPSOK	0x08		/* GPS data valid */
 #define	F_SYNC	0x04		/* Sync request */
+#define F_FILEOPEN	0x02	/* File is open, logging in progress */
 #define	F_LVD	0x01		/* Low battery detect */
 
+/* System.global_error vals */
 #define ERROR_NO	0
 #define ERROR_I2C	1
 #define ERROR_I2C_TIMEOUT	2
+
+/* System.status vals */
+#define STATUS_NO_POWER	0
+#define STATUS_NO_DISK	1
+#define STATUS_NO_GPS	2
+#define STATUS_OK		3
+#define STATUS_DISK_ERROR	4
+#define STATUS_FILE_WRITE_ERROR	5
+#define STATUS_FILE_SYNC_ERROR	6
+#define STATUS_FILE_CLOSE_ERROR	7
+#define STATUS_FILE_OPEN_ERROR	8
 
 #define ms(x) (x/10)
 
@@ -74,6 +87,7 @@ struct timers {
 struct system_s {
 	struct timers timers;
 	unsigned int global_error;
+	unsigned char status;
 };
 
 extern volatile struct system_s System;

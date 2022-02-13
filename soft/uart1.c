@@ -8,8 +8,8 @@
 
 #define	UART1_BAUD		9600
 #define	USE_TXINT		1
-#define	SZ_FIFO			512
-
+#define	SZ_FIFO			128
+#define RECEIVE			0
 
 #if SZ_FIFO >= 256
 typedef uint16_t	idx_t;
@@ -22,8 +22,11 @@ typedef struct {
 	idx_t wi, ri, ct;
 	uint8_t buff[SZ_FIFO];
 } FIFO;
+#if RECEIVE
 static
 volatile FIFO RxFifo;
+#endif
+
 #if USE_TXINT
 static
 volatile FIFO TxFifo;
@@ -40,13 +43,19 @@ void uart1_init (void)
 	PORTD |= _BV(PD3); DDRD |= _BV(PD3);	/* Set TXD as output */
 	DDRD &= ~_BV(PD2); PORTD &= ~_BV(PD2); 	/* Set RXD as input */
 
+#if RECEIVE
 	RxFifo.ct = 0; RxFifo.ri = 0; RxFifo.wi = 0;
+#endif
 #if USE_TXINT
 	TxFifo.ct = 0; TxFifo.ri = 0; TxFifo.wi = 0;
 #endif
 
 	UBRR1L = F_CPU / UART1_BAUD / 16 - 1;
+#if RECEIVE
 	UCSR1B = _BV(RXEN1) | _BV(RXCIE1) | _BV(TXEN1);
+#else
+	UCSR1B = _BV(TXEN1);
+#endif
 }
 
 
@@ -59,12 +68,11 @@ void uart1_deinit (void)
 
 
 /* Get a received character */
-
+#if RECEIVE
 uint8_t uart1_test (void)
 {
 	return RxFifo.ct;
 }
-
 
 uint8_t uart1_get (void)
 {
@@ -84,6 +92,7 @@ uint8_t uart1_get (void)
 
 	return d;
 }
+#endif
 
 
 /* Put a character to transmit */
@@ -109,7 +118,7 @@ void uart1_put (uint8_t d)
 #endif
 }
 
-
+#if RECEIVE
 /* USART1 RXC interrupt */
 ISR(USART1_RX_vect)
 {
@@ -126,7 +135,7 @@ ISR(USART1_RX_vect)
 		RxFifo.wi = (i + 1) % sizeof RxFifo.buff;
 	}
 }
-
+#endif
 
 #if USE_TXINT
 ISR(USART1_UDRE_vect)

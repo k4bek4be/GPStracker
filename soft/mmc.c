@@ -3,6 +3,7 @@
 /*-----------------------------------------------------------------------*/
 
 #include <avr/io.h>
+#include "ff.h"
 #include "diskio.h"
 #include "main.h"
 
@@ -83,15 +84,13 @@ void power_off (void)
 static
 void power_on (void)	/* Apply power sequence */
 {
+	SD_PWROFF_DDR |= SD_PWROFF;
 	for (Timer1 = 30; Timer1; ) {};	/* 300ms */
 	POWER_ON();						/* Power on */
 	for (Timer1 = 3; Timer1; ) {};	/* 30ms */
 
 	SD_CS_PORT |= SD_CS;
 	SD_CS_DDR |= SD_CS;
-
-	SD_PWROFF_PORT |= SD_PWROFF;
-	SD_PWROFF_DDR |= SD_PWROFF;
 
 	PORTB |= _BV(PB5) | _BV(PB7);	/* Configure SCK/MOSI as output */
 	DDRB  |= _BV(PB5) | _BV(PB7);
@@ -469,7 +468,7 @@ DRESULT disk_ioctl (
 	if (drv) return RES_PARERR;
 	buff = 0;
 
-	if (ctrl == CTRL_POWER_OFF) {
+	if (ctrl == CTRL_POWER) {
 		power_off();
 		return RES_OK;
 	}
