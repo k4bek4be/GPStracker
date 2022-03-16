@@ -6,7 +6,7 @@
 #include <avr/interrupt.h>
 #include "uart1.h"
 
-#define	UART1_BAUD		9600
+#define	UART1_BAUD		38400
 #define	USE_TXINT		1
 #define	SZ_FIFO			128
 #define RECEIVE			0
@@ -50,7 +50,7 @@ void uart1_init (void)
 	TxFifo.ct = 0; TxFifo.ri = 0; TxFifo.wi = 0;
 #endif
 
-	UBRR1L = F_CPU / UART1_BAUD / 16 - 1;
+	UBRR1 = F_CPU / UART1_BAUD / 16 - 1;
 #if RECEIVE
 	UCSR1B = _BV(RXEN1) | _BV(RXCIE1) | _BV(TXEN1);
 #else
@@ -110,7 +110,7 @@ void uart1_put (uint8_t d)
 	TxFifo.wi = (i + 1) % sizeof TxFifo.buff;
 	cli();
 	TxFifo.ct++;
-	UCSR1B = _BV(RXEN1)|_BV(RXCIE1)|_BV(TXEN1)|_BV(UDRIE1);
+	UCSR1B |= _BV(UDRIE1);
 	sei();
 #else
 	loop_until_bit_is_set(UCSR1A, UDRE1);
@@ -151,6 +151,6 @@ ISR(USART1_UDRE_vect)
 		TxFifo.ri = (i + 1) % sizeof TxFifo.buff;
 	}
 	if (n == 0)
-		UCSR1B = _BV(RXEN1)|_BV(RXCIE1)|_BV(TXEN1);
+		UCSR1B &= ~_BV(UDRIE1);
 }
 #endif

@@ -96,7 +96,7 @@ static void ftoa (
 
 
 	if (isnan(val)) {			/* Not a number? */
-		er = "NaN";
+		er = PSTR("NaN");
 	} else {
 		if (prec < 0) prec = 6;	/* Default precision (6 fractional digits) */
 		if (val < 0) {			/* Nagative value? */
@@ -105,19 +105,19 @@ static void ftoa (
 			sign = '+';
 		}
 		if (isinf(val)) {		/* Infinite? */
-			er = "INF";
+			er = PSTR("INF");
 		} else {
 			if (fmt == 'f') {	/* Decimal notation? */
 				val += i10x(-prec) / 2;	/* Round (nearest) */
 				m = ilog10(val);
 				if (m < 0) m = 0;
-				if (m + prec + 3 >= SZB_OUTPUT) er = "OV";	/* Buffer overflow? */
+				if (m + prec + 3 >= SZB_OUTPUT) er = PSTR("OV");	/* Buffer overflow? */
 			} else {			/* E notation */
 				if (val != 0) {		/* Not a true zero? */
 					val += i10x(ilog10(val) - prec) / 2;	/* Round (nearest) */
 					e = ilog10(val);
 					if (e > 99 || prec + 6 >= SZB_OUTPUT) {	/* Buffer overflow or E > +99? */
-						er = "OV";
+						er = PSTR("OV");
 					} else {
 						if (e < -99) e = -99;
 						val /= i10x(e);	/* Normalize */
@@ -147,7 +147,11 @@ static void ftoa (
 	}
 	if (er) {	/* Error condition? */
 		if (sign) *buf++ = sign;		/* Add sign if needed */
-		do *buf++ = *er++; while (*er);	/* Put error symbol */
+		char ec = pgm_read_byte(er);
+		do {
+			*buf++ = ec;
+			ec = pgm_read_byte(++er);
+		} while (ec);	/* Put error symbol */
 	}
 	*buf = 0;	/* Term */
 }
@@ -453,15 +457,15 @@ void put_dump (
 	const unsigned long *lp;
 
 
-	xprintf("%08lX ", addr);		/* address */
+	xprintf(PSTR("%08lX "), addr);		/* address */
 
 	switch (width) {
 	case sizeof (char):
 		bp = buff;
 		for (i = 0; i < len; i++) {		/* Hexdecimal dump in (char) */
-			xprintf(" %02X", bp[i]);
+			xprintf(PSTR(" %02X"), bp[i]);
 		}
-		xputs("  ");
+		xputs_P(PSTR("  "));
 		for (i = 0; i < len; i++) {		/* ASCII dump */
 			xputc((unsigned char)((bp[i] >= ' ' && bp[i] <= '~') ? bp[i] : '.'));
 		}
@@ -469,13 +473,13 @@ void put_dump (
 	case sizeof (short):
 		sp = buff;
 		do {							/* Hexdecimal dump in (short) */
-			xprintf(" %04X", *sp++);
+			xprintf(PSTR(" %04X"), *sp++);
 		} while (--len);
 		break;
 	case sizeof (long):
 		lp = buff;
 		do {							/* Hexdecimal dump in (short) */
-			xprintf(" %08lX", *lp++);
+			xprintf(PSTR(" %08lX"), *lp++);
 		} while (--len);
 		break;
 	}
@@ -596,6 +600,7 @@ int xatoi (			/* 0:Failed, 1:Successful */
 	return 1;
 }
 
+#endif /* XF_USE_INPUT */
 
 #if XF_USE_FP
 /*----------------------------------------------*/
@@ -605,7 +610,7 @@ int xatoi (			/* 0:Failed, 1:Successful */
 */
 
 int xatof (			/* 0:Failed, 1:Successful */
-	char **str,		/* Pointer to pointer to the string */
+	const char **str,		/* Pointer to pointer to the string */
 	double *res		/* Pointer to the valiable to store the value */
 )
 {
@@ -670,4 +675,3 @@ int xatof (			/* 0:Failed, 1:Successful */
 }
 #endif /* XF_USE_FP */
 
-#endif /* XF_USE_INPUT */

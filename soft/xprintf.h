@@ -14,7 +14,7 @@ extern "C" {
 #define	XF_CRLF			0	/* 1: Convert \n ==> \r\n in the output char */
 #define	XF_USE_DUMP		0	/* 1: Enable put_dump function */
 #define	XF_USE_LLI		0	/* 1: Enable long long integer in size prefix ll */
-#define	XF_USE_FP		0	/* 1: Enable support for floating point in type e and f */
+#define	XF_USE_FP		1	/* 1: Enable support for floating point in type e and f */
 #define XF_DPC			'.'	/* Decimal separator for floating point */
 #define XF_USE_INPUT	0	/* 1: Enable input functions */
 #define	XF_INPUT_ECHO	0	/* 1: Echo back input chars in xgets function */
@@ -43,7 +43,10 @@ void xfputs_P (void (*func)(int), const __flash char* str);
 extern int (*xfunc_input)(void);
 int xgets (char* buff, int len);
 int xatoi (char** str, long* res);
-int xatof (char** str, double* res);
+#endif
+
+#ifdef XF_USE_FP
+int xatof (const char **str, double *res);
 #endif
 
 #ifdef __cplusplus

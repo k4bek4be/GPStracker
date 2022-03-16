@@ -1,13 +1,20 @@
 #pragma once
 
+#define __PROG_TYPES_COMPAT__
+#include <inttypes.h>
+#include <avr/pgmspace.h>
 #include <avr/interrupt.h>
+#include "stime.h"
 #include "expander.h"
 
 #define LOCALDIFF	+1			/* Time difference from UTC [hours] */
 #define	IVT_SYNC	180			/* f_sync() interval (0:no periodic sync) [sec] */
+#define POWER_SW_TIME	300		/* power switch hold time to power off [10ms] */
 
-#define	VI_LVL		4.2			/* Blackout threshold [volt] */
-#define	VI_LVH		4.8			/* Recharge threshold [volt] */
+//#define	VI_LVL		4.2			/* Blackout threshold [volt] */
+//#define	VI_LVH		4.8			/* Recharge threshold [volt] */
+#define	VI_LVL		2.9			/* Blackout threshold [volt] */
+#define	VI_LVH		3.4			/* Recharge threshold [volt] */
 #define	VI_MULT		(3.3 / 6.6 / 2.495 * 1024)
 
 /* pin definitions */
@@ -39,6 +46,13 @@
 #define SD_WP			_BV(PB2)
 #define SD_WP_PIN		PINB
 
+#define POWER_ON		_BV(PA3)
+#define POWER_ON_PORT	PORTA
+#define POWER_ON_DDR	DDRA
+
+#define POWER_SW		_BV(PC7)
+#define POWER_SW_PIN	PINC
+
 #define LEDG_PORT		1 /* expander */
 #define LEDG			_BV(4)
 
@@ -52,9 +66,14 @@
 #define	LEDG_OFF()		expander_set_bit(LEDG_PORT, LEDG, 0)
 #define GPS_ON()		{GPS_DIS_PORT &= ~GPS_DIS;}
 #define GPS_OFF()		{GPS_DIS_PORT |= GPS_DIS;}
+#define POWEROFF()		{POWER_ON_PORT &= ~POWER_ON;}
+#define POWERON()		{POWER_ON_PORT |= POWER_ON;}
+
+#define POWER_SW_PRESSED()	(POWER_SW_PIN & POWER_SW)
 
 #define FLAGS	GPIOR0		/* Status flags and bit definitions */
 #define	F_POW	0x80		/* Power */
+#define F_POWEROFF	0x10	/* In process of switching off */
 #define	F_GPSOK	0x08		/* GPS data valid */
 #define	F_SYNC	0x04		/* Sync request */
 #define F_FILEOPEN	0x02	/* File is open, logging in progress */
@@ -90,7 +109,17 @@ struct system_s {
 	unsigned char status;
 };
 
+
+struct location_s {
+	float lon;
+	float lat;
+	float alt;
+	time_t time;
+};
+
 extern volatile struct system_s System;
+extern struct location_s location;
+extern time_t utc;
 
 static inline void atomic_set_uint(volatile unsigned int *volatile data, unsigned int value) __attribute__((always_inline));
 static inline void atomic_set_uint(volatile unsigned int *volatile data, unsigned int value){
@@ -110,4 +139,8 @@ static inline unsigned int atomic_get_uint(volatile unsigned int *volatile data)
 #define set_timer(timer,val) set_timer_counts(timer, ms(val))
 #define set_timer_counts(timer,val) atomic_set_uint(&System.timers.timer, val)
 #define timer_expired(timer) !atomic_get_uint(&System.timers.timer)
+
+
+void disk_timerproc (void); /* mmc.h */
+const char *get_iso_time(time_t time);
 

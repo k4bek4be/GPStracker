@@ -20,6 +20,7 @@
 
 
 #include <string.h>
+#include <avr/pgmspace.h>
 #include "ff.h"			/* Declarations of FatFs API */
 #include "diskio.h"		/* Declarations of device I/O functions */
 
@@ -474,7 +475,7 @@ static FILESEM Files[FF_FS_LOCK];	/* Open object lock semaphores */
 
 #if FF_STR_VOLUME_ID
 #ifdef FF_VOLUME_STRS
-static const char* const VolumeStr[FF_VOLUMES] = {FF_VOLUME_STRS};	/* Pre-defined volume ID */
+static __flash const char* const VolumeStr[FF_VOLUMES] = {FF_VOLUME_STRS};	/* Pre-defined volume ID */
 #endif
 #endif
 
@@ -482,7 +483,7 @@ static const char* const VolumeStr[FF_VOLUMES] = {FF_VOLUME_STRS};	/* Pre-define
 #if FF_MIN_GPT > 0x100000000
 #error Wrong FF_MIN_GPT setting
 #endif
-static const BYTE GUID_MS_Basic[16] = {0xA2,0xA0,0xD0,0xEB,0xE5,0xB9,0x33,0x44,0x87,0xC0,0x68,0xB6,0xB7,0x26,0x99,0xC7};
+static __flash const BYTE GUID_MS_Basic[16] = {0xA2,0xA0,0xD0,0xEB,0xE5,0xB9,0x33,0x44,0x87,0xC0,0x68,0xB6,0xB7,0x26,0x99,0xC7};
 #endif
 
 
@@ -510,7 +511,7 @@ static const BYTE GUID_MS_Basic[16] = {0xA2,0xA0,0xD0,0xEB,0xE5,0xB9,0x33,0x44,0
 #if FF_LFN_UNICODE < 0 || FF_LFN_UNICODE > 3
 #error Wrong setting of FF_LFN_UNICODE
 #endif
-static const BYTE LfnOfs[] = {1,3,5,7,9,14,16,18,20,22,24,28,30};	/* FAT: Offset of LFN characters in the directory entry */
+static __flash const BYTE LfnOfs[] = {1,3,5,7,9,14,16,18,20,22,24,28,30};	/* FAT: Offset of LFN characters in the directory entry */
 #define MAXDIRB(nc)	((nc + 44U) / 15 * SZDIRE)	/* exFAT: Size of directory entry block scratchpad buffer needed for the name length */
 
 #if FF_USE_LFN == 1		/* LFN enabled with static working buffer */
@@ -563,37 +564,37 @@ static WCHAR LfnBuf[FF_MAX_LFN + 1];		/* LFN working buffer */
 #if FF_CODE_PAGE == 0	/* Run-time code page configuration */
 #define CODEPAGE CodePage
 static WORD CodePage;	/* Current code page */
-static const BYTE *ExCvt, *DbcTbl;	/* Pointer to current SBCS up-case table and DBCS code range table below */
+static __flash const BYTE *ExCvt, *DbcTbl;	/* Pointer to current SBCS up-case table and DBCS code range table below */
 
-static const BYTE Ct437[] = TBL_CT437;
-static const BYTE Ct720[] = TBL_CT720;
-static const BYTE Ct737[] = TBL_CT737;
-static const BYTE Ct771[] = TBL_CT771;
-static const BYTE Ct775[] = TBL_CT775;
-static const BYTE Ct850[] = TBL_CT850;
-static const BYTE Ct852[] = TBL_CT852;
-static const BYTE Ct855[] = TBL_CT855;
-static const BYTE Ct857[] = TBL_CT857;
-static const BYTE Ct860[] = TBL_CT860;
-static const BYTE Ct861[] = TBL_CT861;
-static const BYTE Ct862[] = TBL_CT862;
-static const BYTE Ct863[] = TBL_CT863;
-static const BYTE Ct864[] = TBL_CT864;
-static const BYTE Ct865[] = TBL_CT865;
-static const BYTE Ct866[] = TBL_CT866;
-static const BYTE Ct869[] = TBL_CT869;
-static const BYTE Dc932[] = TBL_DC932;
-static const BYTE Dc936[] = TBL_DC936;
-static const BYTE Dc949[] = TBL_DC949;
-static const BYTE Dc950[] = TBL_DC950;
+static __flash const BYTE Ct437[] = TBL_CT437;
+static __flash const BYTE Ct720[] = TBL_CT720;
+static __flash const BYTE Ct737[] = TBL_CT737;
+static __flash const BYTE Ct771[] = TBL_CT771;
+static __flash const BYTE Ct775[] = TBL_CT775;
+static __flash const BYTE Ct850[] = TBL_CT850;
+static __flash const BYTE Ct852[] = TBL_CT852;
+static __flash const BYTE Ct855[] = TBL_CT855;
+static __flash const BYTE Ct857[] = TBL_CT857;
+static __flash const BYTE Ct860[] = TBL_CT860;
+static __flash const BYTE Ct861[] = TBL_CT861;
+static __flash const BYTE Ct862[] = TBL_CT862;
+static __flash const BYTE Ct863[] = TBL_CT863;
+static __flash const BYTE Ct864[] = TBL_CT864;
+static __flash const BYTE Ct865[] = TBL_CT865;
+static __flash const BYTE Ct866[] = TBL_CT866;
+static __flash const BYTE Ct869[] = TBL_CT869;
+static __flash const BYTE Dc932[] = TBL_DC932;
+static __flash const BYTE Dc936[] = TBL_DC936;
+static __flash const BYTE Dc949[] = TBL_DC949;
+static __flash const BYTE Dc950[] = TBL_DC950;
 
 #elif FF_CODE_PAGE < 900	/* Static code page configuration (SBCS) */
 #define CODEPAGE FF_CODE_PAGE
-static const BYTE ExCvt[] = MKCVTBL(TBL_CT, FF_CODE_PAGE);
+static __flash const BYTE ExCvt[] = MKCVTBL(TBL_CT, FF_CODE_PAGE);
 
 #else					/* Static code page configuration (DBCS) */
 #define CODEPAGE FF_CODE_PAGE
-static const BYTE DbcTbl[] = MKCVTBL(TBL_DC, FF_CODE_PAGE);
+static __flash const BYTE DbcTbl[] = MKCVTBL(TBL_DC, FF_CODE_PAGE);
 
 #endif
 
@@ -2819,7 +2820,7 @@ static FRESULT create_name (	/* FR_OK: successful, FR_INVALID_NAME: could not cr
 		if (uc >= 0x10000) lfn[di++] = (WCHAR)(uc >> 16);	/* Store high surrogate if needed */
 		wc = (WCHAR)uc;
 		if (wc < ' ' || IsSeparator(wc)) break;	/* Break if end of the path or a separator is found */
-		if (wc < 0x80 && strchr("*:<>|\"\?\x7F", (int)wc)) return FR_INVALID_NAME;	/* Reject illegal characters for LFN */
+		if (wc < 0x80 && strchr_P(PSTR("*:<>|\"\?\x7F"), (int)wc)) return FR_INVALID_NAME;	/* Reject illegal characters for LFN */
 		if (di >= FF_MAX_LFN) return FR_INVALID_NAME;	/* Reject too long name */
 		lfn[di++] = wc;				/* Store the Unicode character */
 	}
@@ -2901,7 +2902,7 @@ static FRESULT create_name (	/* FR_OK: successful, FR_INVALID_NAME: could not cr
 			}
 			dp->fn[i++] = (BYTE)(wc >> 8);	/* Put 1st byte */
 		} else {						/* SBC */
-			if (wc == 0 || strchr("+,;=[]", (int)wc)) {	/* Replace illegal characters for SFN */
+			if (wc == 0 || strchr_P(PSTR("+,;=[]"), (int)wc)) {	/* Replace illegal characters for SFN */
 				wc = '_'; cf |= NS_LOSS | NS_LFN;/* Lossy conversion */
 			} else {
 				if (IsUpper(wc)) {		/* ASCII upper case? */
@@ -2978,7 +2979,7 @@ static FRESULT create_name (	/* FR_OK: successful, FR_INVALID_NAME: could not cr
 			sfn[i++] = c;
 			sfn[i++] = d;
 		} else {						/* SBC */
-			if (strchr("*+,:;<=>[]|\"\?\x7F", (int)c)) return FR_INVALID_NAME;	/* Reject illegal chrs for SFN */
+			if (strchr_P(PSTR("*+,:;<=>[]|\"\?\x7F"), (int)c)) return FR_INVALID_NAME;	/* Reject illegal chrs for SFN */
 			if (IsLower(c)) c -= 0x20;	/* To upper */
 			sfn[i++] = c;
 		}
@@ -3193,7 +3194,7 @@ static int test_gpt_header (	/* 0:Invalid, 1:Valid */
 	DWORD bcc;
 
 
-	if (memcmp(gpth + GPTH_Sign, "EFI PART" "\0\0\1\0" "\x5C\0\0", 16)) return 0;	/* Check sign, version (1.0) and length (92) */
+	if (memcmp_P(gpth + GPTH_Sign, PSTR("EFI PART" "\0\0\1\0" "\x5C\0\0"), 16)) return 0;	/* Check sign, version (1.0) and length (92) */
 	for (i = 0, bcc = 0xFFFFFFFF; i < 92; i++) {		/* Check header BCC */
 		bcc = crc32(bcc, i - GPTH_Bcc < 4 ? 0 : gpth[i]);
 	}
@@ -3248,11 +3249,11 @@ static UINT check_fs (	/* 0:FAT/FAT32 VBR, 1:exFAT VBR, 2:Not FAT and valid BS, 
 	if (move_window(fs, sect) != FR_OK) return 4;	/* Load the boot sector */
 	sign = ld_word(fs->win + BS_55AA);
 #if FF_FS_EXFAT
-	if (sign == 0xAA55 && !memcmp(fs->win + BS_JmpBoot, "\xEB\x76\x90" "EXFAT   ", 11)) return 1;	/* It is an exFAT VBR */
+	if (sign == 0xAA55 && !memcmp_P(fs->win + BS_JmpBoot, PSTR("\xEB\x76\x90" "EXFAT   "), 11)) return 1;	/* It is an exFAT VBR */
 #endif
 	b = fs->win[BS_JmpBoot];
 	if (b == 0xEB || b == 0xE9 || b == 0xE8) {	/* Valid JumpBoot code? (short jump, near jump or near call) */
-		if (sign == 0xAA55 && !memcmp(fs->win + BS_FilSysType32, "FAT32   ", 8)) {
+		if (sign == 0xAA55 && !memcmp_P(fs->win + BS_FilSysType32, PSTR("FAT32   "), 8)) {
 			return 0;	/* It is an FAT32 VBR */
 		}
 		/* FAT volumes formatted with early MS-DOS lack BS_55AA and BS_FilSysType, so FAT VBR needs to be identified without them. */
@@ -5378,7 +5379,7 @@ FRESULT f_setlabel (
 	BYTE dirvn[22];
 	UINT di;
 	WCHAR wc;
-	static const char badchr[18] = "+.,;=[]" "/*:<>|\\\"\?\x7F";	/* [0..16] for FAT, [7..16] for exFAT */
+	static __flash const char badchr[18] = "+.,;=[]" "/*:<>|\\\"\?\x7F";	/* [0..16] for FAT, [7..16] for exFAT */
 #if FF_USE_LFN
 	DWORD dc;
 #endif
@@ -5400,7 +5401,7 @@ FRESULT f_setlabel (
 					st_word(dirvn + di * 2, (WCHAR)(dc >> 16)); di++;
 				}
 			}
-			if (dc == 0 || strchr(&badchr[7], (int)dc) || di >= 11) {	/* Check validity of the volume label */
+			if (dc == 0 || strchr_P(&badchr[7], (int)dc) || di >= 11) {	/* Check validity of the volume label */
 				LEAVE_FF(fs, FR_INVALID_NAME);
 			}
 			st_word(dirvn + di * 2, (WCHAR)dc); di++;
@@ -5424,7 +5425,7 @@ FRESULT f_setlabel (
 			if (wc >= 0x80) wc = ExCvt[wc - 0x80];	/* To upper extended characters (SBCS cfg) */
 #endif
 #endif
-			if (wc == 0 || strchr(&badchr[0], (int)wc) || di >= (UINT)((wc >= 0x100) ? 10 : 11)) {	/* Reject invalid characters for volume label */
+			if (wc == 0 || strchr_P(&badchr[0], (int)wc) || di >= (UINT)((wc >= 0x100) ? 10 : 11)) {	/* Reject invalid characters for volume label */
 				LEAVE_FF(fs, FR_INVALID_NAME);
 			}
 			if (wc >= 0x100) dirvn[di++] = (BYTE)(wc >> 8);
@@ -5678,7 +5679,7 @@ static FRESULT create_partition (
 		UINT sz_ptbl, pi, si, ofs;
 		DWORD bcc, rnd, align;
 		QWORD nxt_alloc, sz_part, sz_pool, top_bpt;
-		static const BYTE gpt_mbr[16] = {0x00, 0x00, 0x02, 0x00, 0xEE, 0xFE, 0xFF, 0x00, 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF};
+		static __flash const BYTE gpt_mbr[16] = {0x00, 0x00, 0x02, 0x00, 0xEE, 0xFE, 0xFF, 0x00, 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF};
 
 #if FF_MAX_SS != FF_MIN_SS
 		if (disk_ioctl(drv, GET_SECTOR_SIZE, &ss) != RES_OK) return FR_DISK_ERR;	/* Get sector size */
@@ -5724,7 +5725,7 @@ static FRESULT create_partition (
 
 		/* Create primary GPT header */
 		memset(buf, 0, ss);
-		memcpy(buf + GPTH_Sign, "EFI PART" "\0\0\1\0" "\x5C\0\0", 16);	/* Signature, version (1.0) and size (92) */
+		memcpy_P(buf + GPTH_Sign, PSTR("EFI PART" "\0\0\1\0" "\x5C\0\0"), 16);	/* Signature, version (1.0) and size (92) */
 		st_dword(buf + GPTH_PtBcc, ~bcc);			/* Table check sum */
 		st_qword(buf + GPTH_CurLba, 1);				/* LBA of this header */
 		st_qword(buf + GPTH_BakLba, sz_drv - 1);	/* LBA of secondary header */
@@ -5749,7 +5750,7 @@ static FRESULT create_partition (
 
 		/* Create protective MBR */
 		memset(buf, 0, ss);
-		memcpy(buf + MBR_Table, gpt_mbr, 16);		/* Create a GPT partition */
+		memcpy_P(buf + MBR_Table, gpt_mbr, 16);		/* Create a GPT partition */
 		st_word(buf + BS_55AA, 0xAA55);
 		if (disk_write(drv, buf, 0, 1) != RES_OK) return FR_DISK_ERR;
 
@@ -5806,8 +5807,8 @@ FRESULT f_mkfs (
 	UINT len				/* Size of working buffer [byte] */
 )
 {
-	static const WORD cst[] = {1, 4, 16, 64, 256, 512, 0};	/* Cluster size boundary for FAT volume (4Ks unit) */
-	static const WORD cst32[] = {1, 2, 4, 8, 16, 32, 0};	/* Cluster size boundary for FAT32 volume (128Ks unit) */
+	static __flash const WORD cst[] = {1, 4, 16, 64, 256, 512, 0};	/* Cluster size boundary for FAT volume (4Ks unit) */
+	static __flash const WORD cst32[] = {1, 2, 4, 8, 16, 32, 0};	/* Cluster size boundary for FAT32 volume (128Ks unit) */
 	static const MKFS_PARM defopt = {FM_ANY, 0, 0, 0, 0};	/* Default parameter */
 	BYTE fsopt, fsty, sys, *buf, *pte, pdrv, ipart;
 	WORD ss;	/* Sector size */
@@ -6057,7 +6058,7 @@ FRESULT f_mkfs (
 		for (n = 0; n < 2; n++) {
 			/* Main record (+0) */
 			memset(buf, 0, ss);
-			memcpy(buf + BS_JmpBoot, "\xEB\x76\x90" "EXFAT   ", 11);	/* Boot jump code (x86), OEM name */
+			memcpy_P(buf + BS_JmpBoot, PSTR("\xEB\x76\x90" "EXFAT   "), 11);	/* Boot jump code (x86), OEM name */
 			st_qword(buf + BPB_VolOfsEx, b_vol);					/* Volume offset in the physical drive [sector] */
 			st_qword(buf + BPB_TotSecEx, sz_vol);					/* Volume size [sector] */
 			st_dword(buf + BPB_FatOfsEx, (DWORD)(b_fat - b_vol));	/* FAT offset [sector] */
@@ -6178,7 +6179,7 @@ FRESULT f_mkfs (
 #endif
 		/* Create FAT VBR */
 		memset(buf, 0, ss);
-		memcpy(buf + BS_JmpBoot, "\xEB\xFE\x90" "MSDOS5.0", 11);	/* Boot jump code (x86), OEM name */
+		memcpy_P(buf + BS_JmpBoot, PSTR("\xEB\xFE\x90" "MSDOS5.0"), 11);	/* Boot jump code (x86), OEM name */
 		st_word(buf + BPB_BytsPerSec, ss);				/* Sector size [byte] */
 		buf[BPB_SecPerClus] = (BYTE)pau;				/* Cluster size [sector] */
 		st_word(buf + BPB_RsvdSecCnt, (WORD)sz_rsv);	/* Size of reserved area */
@@ -6201,13 +6202,13 @@ FRESULT f_mkfs (
 			st_word(buf + BPB_BkBootSec32, 6);			/* Offset of backup VBR (VBR + 6) */
 			buf[BS_DrvNum32] = 0x80;					/* Drive number (for int13) */
 			buf[BS_BootSig32] = 0x29;					/* Extended boot signature */
-			memcpy(buf + BS_VolLab32, "NO NAME    " "FAT32   ", 19);	/* Volume label, FAT signature */
+			memcpy_P(buf + BS_VolLab32, PSTR("NO NAME    " "FAT32   "), 19);	/* Volume label, FAT signature */
 		} else {
 			st_dword(buf + BS_VolID, vsn);				/* VSN */
 			st_word(buf + BPB_FATSz16, (WORD)sz_fat);	/* FAT size [sector] */
 			buf[BS_DrvNum] = 0x80;						/* Drive number (for int13) */
 			buf[BS_BootSig] = 0x29;						/* Extended boot signature */
-			memcpy(buf + BS_VolLab, "NO NAME    " "FAT     ", 19);	/* Volume label, FAT signature */
+			memcpy_P(buf + BS_VolLab, PSTR("NO NAME    " "FAT     "), 19);	/* Volume label, FAT signature */
 		}
 		st_word(buf + BS_55AA, 0xAA55);					/* Signature (offset is fixed here regardless of sector size) */
 		if (disk_write(pdrv, buf, b_vol, 1) != RES_OK) LEAVE_MKFS(FR_DISK_ERR);	/* Write it to the VBR sector */
@@ -6960,8 +6961,8 @@ FRESULT f_setcp (
 	WORD cp		/* Value to be set as active code page */
 )
 {
-	static const WORD       validcp[22] = {  437,   720,   737,   771,   775,   850,   852,   855,   857,   860,   861,   862,   863,   864,   865,   866,   869,   932,   936,   949,   950, 0};
-	static const BYTE* const tables[22] = {Ct437, Ct720, Ct737, Ct771, Ct775, Ct850, Ct852, Ct855, Ct857, Ct860, Ct861, Ct862, Ct863, Ct864, Ct865, Ct866, Ct869, Dc932, Dc936, Dc949, Dc950, 0};
+	static __flash const WORD       validcp[22] = {  437,   720,   737,   771,   775,   850,   852,   855,   857,   860,   861,   862,   863,   864,   865,   866,   869,   932,   936,   949,   950, 0};
+	static __flash const BYTE* __flash const tables[22] = {Ct437, Ct720, Ct737, Ct771, Ct775, Ct850, Ct852, Ct855, Ct857, Ct860, Ct861, Ct862, Ct863, Ct864, Ct865, Ct866, Ct869, Dc932, Dc936, Dc949, Dc950, 0};
 	UINT i;
 
 

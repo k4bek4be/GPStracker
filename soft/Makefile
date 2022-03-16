@@ -2,12 +2,12 @@
 PROJECT	= glg
 
 ### Source files and search directory
-CSRC    = main.c uart0.c uart1.c ff.c mmc.c 1wire.c ds18b20.c expander.c HD44780-I2C.c I2C.c xprintf.c
+CSRC    = main.c uart0.c uart1.c ff.c mmc.c 1wire.c ds18b20.c expander.c HD44780-I2C.c I2C.c xprintf.c gpx.c ffunicode.c
 ASRC    = stime.S
 VPATH   =
 
 ### Target device
-DEVICE  = atmega644pa
+DEVICE  = atmega644p
 
 ### Optimization level (0, 1, 2, 3, 4 or s)
 OPTIMIZE = s
@@ -41,6 +41,7 @@ OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
 SIZE    = avr-size
 NM      = avr-nm
+AVRDUDE	= avrdude -c usbasp -p $(DEVICE)
 
 
 # Define all object files
@@ -153,4 +154,11 @@ clean:
 
 # Include the dependency files.
 -include $(shell mkdir $(OBJDIR) 2>/dev/null) $(wildcard $(OBJDIR)/*.d)
+
+install: all
+	$(AVRDUDE) -U flash:w:$(PROJECT).hex
+reset:
+	$(AVRDUDE)
+fuses:
+	$(AVRDUDE) -U lfuse:w:0xff:m -U hfuse:w:0x11:m -U efuse:w:0xfe:m -B100
 
