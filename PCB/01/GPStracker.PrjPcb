@@ -235,176 +235,92 @@ GenerateClassCluster=0
 DocumentUniqueId=
 
 [GeneratedDocument1]
-DocumentPath=../gerber\01\GPST-01-2206-RoundHoles-NonPlated.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument2]
-DocumentPath=../gerber\01\GPST-01-2206-RoundHoles-Plated.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument3]
 DocumentPath=../gerber\01\GPST-01-2206-RoundHoles.TXT
 DItemRevisionGUID=
 
-[GeneratedDocument4]
-DocumentPath=../gerber\01\GPST-01-2206-SlotHoles-Plated.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument5]
+[GeneratedDocument2]
 DocumentPath=../gerber\01\GPST-01-2206-SlotHoles.TXT
 DItemRevisionGUID=
 
-[GeneratedDocument6]
+[GeneratedDocument3]
 DocumentPath=../gerber\01\GPST-01-2206.DRR
 DItemRevisionGUID=
 
-[GeneratedDocument7]
+[GeneratedDocument4]
 DocumentPath=../gerber\01\GPST-01-2206.EXTREP
 DItemRevisionGUID=
 
-[GeneratedDocument8]
+[GeneratedDocument5]
 DocumentPath=../gerber\01\GPST-01-2206.GBL
 DItemRevisionGUID=
 
-[GeneratedDocument9]
+[GeneratedDocument6]
 DocumentPath=../gerber\01\GPST-01-2206.GBO
 DItemRevisionGUID=
 
-[GeneratedDocument10]
+[GeneratedDocument7]
 DocumentPath=../gerber\01\GPST-01-2206.GBP
 DItemRevisionGUID=
 
-[GeneratedDocument11]
+[GeneratedDocument8]
 DocumentPath=../gerber\01\GPST-01-2206.GBS
 DItemRevisionGUID=
 
-[GeneratedDocument12]
+[GeneratedDocument9]
 DocumentPath=../gerber\01\GPST-01-2206.GKO
 DItemRevisionGUID=
 
-[GeneratedDocument13]
+[GeneratedDocument10]
 DocumentPath=../gerber\01\GPST-01-2206.GM7
 DItemRevisionGUID=
 
-[GeneratedDocument14]
+[GeneratedDocument11]
 DocumentPath=../gerber\01\GPST-01-2206.GM8
 DItemRevisionGUID=
 
-[GeneratedDocument15]
+[GeneratedDocument12]
 DocumentPath=../gerber\01\GPST-01-2206.GM9
 DItemRevisionGUID=
 
-[GeneratedDocument16]
+[GeneratedDocument13]
 DocumentPath=../gerber\01\GPST-01-2206.GTL
 DItemRevisionGUID=
 
-[GeneratedDocument17]
+[GeneratedDocument14]
 DocumentPath=../gerber\01\GPST-01-2206.GTO
 DItemRevisionGUID=
 
-[GeneratedDocument18]
+[GeneratedDocument15]
 DocumentPath=../gerber\01\GPST-01-2206.GTP
 DItemRevisionGUID=
 
-[GeneratedDocument19]
+[GeneratedDocument16]
 DocumentPath=../gerber\01\GPST-01-2206.GTS
 DItemRevisionGUID=
 
-[GeneratedDocument20]
+[GeneratedDocument17]
 DocumentPath=../gerber\01\GPST-01-2206.LDP
 DItemRevisionGUID=
 
-[GeneratedDocument21]
+[GeneratedDocument18]
 DocumentPath=../gerber\01\GPST-01-2206.REP
 DItemRevisionGUID=
 
-[GeneratedDocument22]
+[GeneratedDocument19]
 DocumentPath=../gerber\01\GPST-01-2206.RUL
 DItemRevisionGUID=
 
-[GeneratedDocument23]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion-RoundHoles-NonPlated.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument24]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion-RoundHoles-Plated.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument25]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion-SlotHoles-Plated.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument26]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion.DRR
-DItemRevisionGUID=
-
-[GeneratedDocument27]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion.EXTREP
-DItemRevisionGUID=
-
-[GeneratedDocument28]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion.GBL
-DItemRevisionGUID=
-
-[GeneratedDocument29]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion.GBO
-DItemRevisionGUID=
-
-[GeneratedDocument30]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion.GBP
-DItemRevisionGUID=
-
-[GeneratedDocument31]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion.GBS
-DItemRevisionGUID=
-
-[GeneratedDocument32]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion.GKO
-DItemRevisionGUID=
-
-[GeneratedDocument33]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion.GM7
-DItemRevisionGUID=
-
-[GeneratedDocument34]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion.GM8
-DItemRevisionGUID=
-
-[GeneratedDocument35]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion.GM9
-DItemRevisionGUID=
-
-[GeneratedDocument36]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion.GTL
-DItemRevisionGUID=
-
-[GeneratedDocument37]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion.GTO
-DItemRevisionGUID=
-
-[GeneratedDocument38]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion.GTP
-DItemRevisionGUID=
-
-[GeneratedDocument39]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion.GTS
-DItemRevisionGUID=
-
-[GeneratedDocument40]
-DocumentPath=../gerber\PCBName\PRJName-PCBName-PCBVersion.RUL
-DItemRevisionGUID=
-
 [Parameter1]
-Name=PRJName
-Value=GPST
+Name=PCBName
+Value=01
 
 [Parameter2]
 Name=PCBVersion
 Value=2206
 
 [Parameter3]
-Name=PCBName
-Value=01
+Name=PRJName
+Value=GPST
 
 [Configuration1]
 Name=Sources
@@ -994,36 +910,6 @@ OutputName11=Specctra Design PCB
 OutputDocumentPath11=
 OutputVariantName11=
 OutputDefault11=0
-OutputType12=Ansoft Neutral
-OutputName12=Ansoft Neutral (AutoPCB)
-OutputDocumentPath12=
-OutputVariantName12=
-OutputDefault12=0
-OutputType13=HyperLynx
-OutputName13=HyperLynx (AutoPCB)
-OutputDocumentPath13=
-OutputVariantName13=
-OutputDefault13=0
-OutputType14=Orcad v7 Capture Design
-OutputName14=Orcad v7 Capture Design (AutoSCH)
-OutputDocumentPath14=
-OutputVariantName14=
-OutputDefault14=0
-OutputType15=P-CAD ASCII
-OutputName15=P-CAD ASCII (AutoPCB)
-OutputDocumentPath15=
-OutputVariantName15=
-OutputDefault15=0
-OutputType16=P-CAD V16 Schematic Design
-OutputName16=P-CAD V16 Schematic Design (AutoSCH)
-OutputDocumentPath16=
-OutputVariantName16=
-OutputDefault16=0
-OutputType17=SiSoft
-OutputName17=SiSoft (AutoPCB)
-OutputDocumentPath17=
-OutputVariantName17=
-OutputDefault17=0
 
 [OutputGroup10]
 Name=PostProcess Outputs
