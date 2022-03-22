@@ -9,6 +9,9 @@ VPATH   =
 ### Target device
 DEVICE  = atmega644p
 
+### Bootloader port
+PROGPORT ?= /dev/ttyUSB0
+
 ### Optimization level (0, 1, 2, 3, 4 or s)
 OPTIMIZE = s
 
@@ -41,7 +44,7 @@ OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
 SIZE    = avr-size
 NM      = avr-nm
-AVRDUDE	= avrdude -c usbasp -p $(DEVICE)
+AVRDUDE	= avrdude -c arduino -b 230400 -P $(PROGPORT) -p $(DEVICE)
 
 
 # Define all object files
@@ -159,6 +162,4 @@ install: all
 	$(AVRDUDE) -U flash:w:$(PROJECT).hex
 reset:
 	$(AVRDUDE)
-fuses:
-	$(AVRDUDE) -U lfuse:w:0xff:m -U hfuse:w:0x11:m -U efuse:w:0xfe:m -B100
 
