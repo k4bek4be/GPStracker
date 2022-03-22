@@ -78,16 +78,19 @@ uint8_t uart1_get (void)
 {
 	uint8_t d;
 	idx_t i;
+	unsigned char SREG_buf = SREG;
 
 
 	do {
-		cli(); i = RxFifo.ct; sei();
+		cli();
+		i = RxFifo.ct;
+		SREG = SREG_buf;
 	} while (i == 0) ;
 	i = RxFifo.ri;
 	d = RxFifo.buff[i];
 	cli();
 	RxFifo.ct--;
-	sei();
+	SREG = SREG_buf;
 	RxFifo.ri = (i + 1) % sizeof RxFifo.buff;
 
 	return d;
@@ -101,9 +104,12 @@ void uart1_put (uint8_t d)
 {
 #if USE_TXINT
 	idx_t i;
+	unsigned char SREG_buf = SREG;
 
 	do {
-		cli(); i = TxFifo.ct; sei();
+		cli();
+		i = TxFifo.ct;
+		SREG = SREG_buf;
 	} while (i >= sizeof TxFifo.buff);
 	i = TxFifo.wi;
 	TxFifo.buff[i] = d;
@@ -111,7 +117,7 @@ void uart1_put (uint8_t d)
 	cli();
 	TxFifo.ct++;
 	UCSR1B |= _BV(UDRIE1);
-	sei();
+	SREG = SREG_buf;
 #else
 	loop_until_bit_is_set(UCSR1A, UDRE1);
 	UDR1 = d;
