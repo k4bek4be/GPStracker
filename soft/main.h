@@ -13,7 +13,7 @@
 
 //#define	VI_LVL		4.2			/* Blackout threshold [volt] */
 //#define	VI_LVH		4.8			/* Recharge threshold [volt] */
-#define	VI_LVL		2.9			/* Blackout threshold [volt] */
+#define	VI_LVL		3.1			/* Blackout threshold [volt] */
 #define	VI_LVH		3.4			/* Recharge threshold [volt] */
 #define	VI_MULT		(3.3 / 6.6 / 2.495 * 1024)
 
@@ -56,6 +56,9 @@
 #define LEDG_PORT		1 /* expander */
 #define LEDG			_BV(4)
 
+#define LEDB_PORT		1 /* expander */
+#define LEDB			_BV(5)
+
 /* on/off macros */
 
 #define	BEEP_ON()		{BUZZER_PORT |= BUZZER;}
@@ -64,6 +67,8 @@
 #define LEDR_OFF()		{LEDR_PORT &= ~LEDR;}
 #define	LEDG_ON()		expander_set_bit(LEDG_PORT, LEDG, 1)
 #define	LEDG_OFF()		expander_set_bit(LEDG_PORT, LEDG, 0)
+#define	LEDB_ON()		expander_set_bit(LEDB_PORT, LEDB, 1)
+#define	LEDB_OFF()		expander_set_bit(LEDB_PORT, LEDB, 0)
 #define GPS_ON()		{GPS_DIS_PORT &= ~GPS_DIS;}
 #define GPS_OFF()		{GPS_DIS_PORT |= GPS_DIS;}
 #define POWEROFF()		{POWER_ON_PORT &= ~POWER_ON;}
@@ -101,12 +106,16 @@ struct timers {
 	unsigned int owire;
 	unsigned int beep;
 	unsigned int recv_timeout;
+	unsigned int system_log;
 };
 
 struct system_s {
 	struct timers timers;
 	unsigned int global_error;
 	unsigned char status;
+	float bat_volt;
+	float temperature;
+	unsigned char temperature_ok;
 };
 
 

@@ -6,10 +6,10 @@
 #include <avr/interrupt.h>
 #include "uart1.h"
 
-#define	UART1_BAUD		38400
+#define	UART1_BAUD		230400
 #define	USE_TXINT		1
-#define	SZ_FIFO			128
-#define RECEIVE			0
+#define	SZ_FIFO			64
+#define RECEIVE			1
 
 #if SZ_FIFO >= 256
 typedef uint16_t	idx_t;
