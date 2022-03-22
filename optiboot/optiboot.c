@@ -706,7 +706,7 @@ void pre_main(void) {
 
 
 /* main program starts here */
-void bootloader(unsigned char check_reset) {
+int main(void) {
   uint8_t ch;
 
   /*
@@ -786,7 +786,7 @@ void bootloader(unsigned char check_reset) {
   ch = MCUSR;
 
   // Skip all logic and run bootloader if MCUSR is cleared (application request)
-  if (check_reset && ch != 0) {
+  if (ch != 0) {
     /*
      * To run the boot loader, External Reset Flag must be set.
      * If not, we could make shortcut and jump directly to application code.
@@ -902,6 +902,7 @@ void bootloader(unsigned char check_reset) {
   /* Set LED pin as output */
   LED_DDR |= _BV(LED);
 #endif
+
   /* hold POWER_ON (GPStracker) */
   DDRA |= _BV(PA3);
   PORTA |= _BV(PA3);
@@ -927,12 +928,7 @@ void bootloader(unsigned char check_reset) {
     /* get character from UART */
     ch = getch();
 
-//	putch(ch);
-	/*continue;*/
-    if (ch == STK_GET_SYNC) {
-      verifySpace();
-    }
-    else if (ch == STK_GET_PARAMETER) {
+    if (ch == STK_GET_PARAMETER) {
       unsigned char which = getch();
       verifySpace();
       /*
@@ -1185,14 +1181,6 @@ void bootloader(unsigned char check_reset) {
     }
     putch(STK_OK);
   }
-}
-
-int main(void) {
-	bootloader(1);
-}
-
-__attribute__((section(".manualcall"))) void manual_call(void) {
-	bootloader(0);
 }
 
 void putch(char ch) {

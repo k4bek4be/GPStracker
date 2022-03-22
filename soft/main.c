@@ -39,17 +39,18 @@ time_t utc;					/* current time */
 struct location_s location;
 
 void start_bootloader(void) {
-    typedef void (*do_reboot_t)(void);
-    const do_reboot_t do_reboot = (do_reboot_t)(0x7ffa >> 1);
-
-    cli();
-    LCD_Clear();
-    LCD_GoTo(0,0);
-    LCD_WriteTextP(PSTR("Aktualizacja"));
-    LCD_GoTo(8,1);
-    LCD_WriteTextP(PSTR("softu..."));
-    TCCR0A = TCCR1A = TCCR2A = 0; // make sure interrupts are off and timers are reset.
-    do_reboot();
+	typedef void (*do_reboot_t)(void);
+	const do_reboot_t do_reboot = (do_reboot_t)((FLASHEND - 1023) >> 1);
+	cli();
+	LCD_Clear();
+	LCD_GoTo(0,0);
+	LCD_WriteTextP(PSTR("Aktualizacja"));
+	LCD_GoTo(8,1);
+	LCD_WriteTextP(PSTR("softu..."));
+	TCCR0A = TCCR1A = TCCR2A = 0; // make sure interrupts are off and timers are reset.
+	do_reboot();
+	wdt_enable(WDTO_15MS);
+	while(1);
 }
 
 /*---------------------------------------------------------*/
@@ -101,9 +102,9 @@ ISR(TIMER1_COMPA_vect)
 	}
 	
 	if (uart1_test() && uart1_get() == '0' && uart1_get() == ' '){
-	//if (!(PIND & _BV(PD5))) {
 		LEDB_ON();
 		start_bootloader();
+		LEDR_ON();
 	}
 }
 
@@ -179,6 +180,7 @@ UINT get_line (		/* 0:Brownout or timeout, >0: Number of bytes received. */
 	set_timer(recv_timeout, 1000);
 
 	for (;;) {
+		wdt_reset();
 		if (FLAGS & (F_LVD | F_POWEROFF))
 			return 0;	/* A brownout is detected */
 		if (timer_expired(recv_timeout))
@@ -400,6 +402,8 @@ void log_put(char c){
 static
 void ioinit (void)
 {
+	wdt_enable(WDTO_4S);
+    MCUSR = 0;
 	POWER_ON_DDR |= POWER_ON;
 	PORTA |= POWER_ON;
 	
@@ -515,9 +519,9 @@ int main (void)
 	xputs_P(PSTR("STARTUP\r\n"));
 	LCD_GoTo(0,0);
 	LCD_WriteTextP(PSTR("Uruchamianie... "));
-	_delay_ms(3000);
 	
 	for (;;) {
+		wdt_reset();
 		if (FLAGS & (F_POWEROFF | F_LVD)) {
 			xputs_P(PSTR("POWEROFF\r\n"));
 			LCD_GoTo(0,0);
@@ -591,6 +595,7 @@ int main (void)
 //		xfprintf(uart0_put, PSTR("$PSRF106,21*0F\r\n"));	/* Send initialization command (depends on the receiver) */
 
 		for (;;) { /* main loop */
+			wdt_reset();
 			battery_state_display();
 			gettemp();
 

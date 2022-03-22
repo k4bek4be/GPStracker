@@ -62,7 +62,7 @@ export
 MCU_TARGET = atmega644p
 BIGBOOT = 0
 BOOT_ON_POR = 1
-APP_ON_EXTR = 0
+#APP_ON_EXTR = 0
 TIMEOUT = 4
 UART = 1
 SINGLESPEED = 0
@@ -72,7 +72,7 @@ AVR_FREQ = 7372800L
 LED = A6
 LED_START_ON = 1
 LED_START_FLASHES = 0
-LDSECTIONS  = -Wl,-Tlink_optiboot.ld -Wl,-section-start=.manualcall=0x7ffa
+LDSECTIONS  = -Wl,-Tlink_optiboot.ld
 all: atmega644p
 
 # Build environments
