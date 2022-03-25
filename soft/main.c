@@ -24,6 +24,7 @@
 #include "HD44780-I2C.h"
 #include "gpx.h"
 #include "display.h"
+#include "working_modes.h"
 
 
 /*FUSES = {0xFF, 0x11, 0xFE};*/		/* ATmega644PA fuses: Low, High, Extended.
@@ -44,7 +45,9 @@ void start_bootloader(void) {
 	typedef void (*do_reboot_t)(void);
 	const do_reboot_t do_reboot = (do_reboot_t)((FLASHEND - 1023) >> 1);
 	cli();
-//	close_files(0); // FIXME not working
+	uart1_deinit();
+/*	close_files(0); // FIXME not working
+	display_state(DISPLAY_STATE_BOOTLOADER);*/
 	LCD_Clear(); /* Do not call display.c here! */
 	LCD_GoTo(0,0);
 	LCD_WriteTextP(PSTR("Aktualizacja"));
@@ -67,6 +70,8 @@ ISR(TIMER1_COMPA_vect)
 	static unsigned int power_sw;
 	unsigned int *volatile ctimer;
 	unsigned char i;
+	unsigned char k;
+	static unsigned char oldk;
 	
 	for(i=0; i<sizeof(System.timers)/sizeof(unsigned int); i++){ // decrement every variable from timers struct unless it's already zero
 		ctimer = ((unsigned int *)&System.timers) + i;
@@ -109,6 +114,23 @@ ISR(TIMER1_COMPA_vect)
 		start_bootloader();
 		LEDR_ON();
 	}
+	
+	/* keyboard */
+	k = ((~PIND) >> 4) & 0x0f;
+	if (POWER_SW_PRESSED())
+		k |= K_POWER;
+	if (k && k != oldk) {
+		System.keypress = k;
+		oldk = k;
+	}
+	if (!k)
+		oldk = 0;
+}
+
+unsigned char getkey(void) {
+	unsigned char key = System.keypress;
+	System.keypress = 0;
+	return key;
 }
 
 
@@ -337,6 +359,7 @@ static time_t gp_rmc_parse(const char *str) {
 
 	p = gp_col(str, 2);		/* Get status */
 	if (!p || *p != 'A') {
+		System.location_valid = LOC_INVALID;
 		FLAGS &= ~F_GPSOK;
 		return 0;			/* Return 0 even is time is valid (comes from module's internal RTC) */
 	}
@@ -352,10 +375,12 @@ static void gp_gga_parse(const char *str) {
 
 	/* check validity */
 	p = gp_col(str, 6);
-	if (*p == '0')
+	if (*p == '0') {
+		System.location_valid = LOC_INVALID;
 		return;
+	}
 	
-	System.location_valid = 1;
+	System.location_valid = LOC_VALID_NEW;
 
 	/* parse location */
 	p = gp_col(str, 2);		/* latitude */
@@ -559,6 +584,7 @@ int main (void)
 			wdt_reset();
 			display_refresh(DISPLAY_STATE_NO_CHANGE);
 			gettemp();
+			key_process();
 
 			if (!(FLAGS & F_GPSOK))
 				xputs_P(PSTR("Waiting for GPS\r\n"));
@@ -593,7 +619,7 @@ int main (void)
 					System.status = STATUS_FILE_WRITE_ERROR;
 					break;
 				}
-				if (System.location_valid) /* a new point */
+				if (System.location_valid == LOC_VALID_NEW) /* a new point */
 					gpx_process_point(&location, &gpx_file);
 				wdt_reset();
 				if (FLAGS & F_SYNC) {
@@ -604,7 +630,9 @@ int main (void)
 					FLAGS &= ~F_SYNC;
 				}
 			}
-			System.location_valid = 0;
+			if (System.location_valid == LOC_VALID_NEW) {
+				System.location_valid = LOC_VALID;
+			}
 
 			if (localtime && !(FLAGS & F_FILEOPEN)) {
 				xsprintf(Line, PSTR("%04u-%02u-%02u_%02u-%02u-%02u.LOG"), ct.tm_year+1900, ct.tm_mon + 1, ct.tm_mday, ct.tm_hour, ct.tm_min, ct.tm_sec);

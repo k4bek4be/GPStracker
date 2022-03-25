@@ -100,6 +100,18 @@
 #define STATUS_FILE_CLOSE_ERROR	7
 #define STATUS_FILE_OPEN_ERROR	8
 
+/* Keyboard */
+#define K_UP	_BV(1)
+#define K_DOWN	_BV(3)
+#define K_LEFT	_BV(2)
+#define K_RIGHT	_BV(0)
+#define K_POWER	_BV(4)
+
+/* System.location_valid values */
+#define LOC_INVALID	0
+#define LOC_VALID	1
+#define LOC_VALID_NEW	2
+
 #define ms(x) (x/10)
 
 struct timers {
@@ -120,6 +132,8 @@ struct system_s {
 	unsigned char satellites_used;
 	unsigned char display_state;
 	unsigned char location_valid;
+	unsigned char keypress;
+	unsigned char working_mode;
 };
 
 struct location_s {
@@ -156,5 +170,5 @@ static inline unsigned int atomic_get_uint(volatile unsigned int *volatile data)
 void disk_timerproc (void); /* mmc.h */
 const char *get_iso_time(time_t time);
 void close_files(unsigned char flush_logs);
-
+unsigned char getkey(void);
 
