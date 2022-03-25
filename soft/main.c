@@ -10,6 +10,7 @@
 #include <avr/pgmspace.h>
 #include <avr/wdt.h>
 #include <string.h>
+#include <stdlib.h>
 #include "main.h"
 #include "ff.h"
 #include "diskio.h"
@@ -22,6 +23,7 @@
 #include "expander.h"
 #include "HD44780-I2C.h"
 #include "gpx.h"
+#include "display.h"
 
 
 /*FUSES = {0xFF, 0x11, 0xFE};*/		/* ATmega644PA fuses: Low, High, Extended.
@@ -42,7 +44,8 @@ void start_bootloader(void) {
 	typedef void (*do_reboot_t)(void);
 	const do_reboot_t do_reboot = (do_reboot_t)((FLASHEND - 1023) >> 1);
 	cli();
-	LCD_Clear();
+//	close_files(0); // FIXME not working
+	LCD_Clear(); /* Do not call display.c here! */
 	LCD_GoTo(0,0);
 	LCD_WriteTextP(PSTR("Aktualizacja"));
 	LCD_GoTo(8,1);
@@ -310,19 +313,9 @@ UINT gp_val3 (
 }
 
 
-
-
-static
-time_t gp_rmctime (	/* Get GPS status from RMC sentence */
-	const char *str
-)
-{
+static time_t gp_rmc_parse(const char *str) {
 	const char *p;
 	struct tm tmc;
-	double tmp;
-
-	if (gp_comp(str, PSTR("$GPRMC")))
-		return 0;	/* Not the RMC */
 
 	p = gp_col(str, 1);		/* Get h:m:s */
 	if (!p)
@@ -350,34 +343,64 @@ time_t gp_rmctime (	/* Get GPS status from RMC sentence */
 
 	FLAGS |= F_GPSOK;
 	
+	return utc;
+}
+
+static void gp_gga_parse(const char *str) {
+	const char *p;
+	double tmp;
+
+	/* check validity */
+	p = gp_col(str, 6);
+	if (*p == '0')
+		return;
+	
+	System.location_valid = 1;
+
 	/* parse location */
-	p = gp_col(str, 3);		/* latitude */
+	p = gp_col(str, 2);		/* latitude */
 	location.lat = gp_val2(p);	/* degrees */
 	p += 2;
 	xatof(&p, &tmp);	/* minutes */
 	tmp /= 60;			/* convert minutes to degrees */
 	location.lat += tmp;
 
-	p = gp_col(str, 4);	/* N/S */
+	p = gp_col(str, 3);	/* N/S */
 	if (*p != 'N')
 		location.lat = -location.lat;
 	
-	p = gp_col(str, 5);		/* longitude */
+	p = gp_col(str, 4);		/* longitude */
 	location.lon = gp_val3(p);	/* degrees */
 	p += 3;
 	xatof(&p, &tmp);	/* minutes */
 	tmp /= 60;			/* convert minutes to degrees */
 	location.lon += tmp;
 
-	p = gp_col(str, 6); /* E/W */
+	p = gp_col(str, 5); /* E/W */
 	if (*p != 'E')
 		location.lon = -location.lon;
 
-	location.time = utc;
+	p = gp_col(str, 7); /* satellites used */
+	System.satellites_used = atoi(p);
 	
-	return utc;
+	p = gp_col(str, 9); /* MSL altitude */
+	xatof(&p, &tmp);
+	location.alt = tmp;
+
+	location.time = utc; /* parsed from RMC */
 }
 
+static time_t gps_parse(const char *str) {	/* Get all required data from NMEA sentences */
+
+	if (!gp_comp(str, PSTR("$GPRMC"))) {
+		return gp_rmc_parse(str);
+	}
+	if (!gp_comp(str, PSTR("$GPGGA"))) {
+		gp_gga_parse(str);
+		return 0;
+	}
+	return 0;
+}
 
 #define LOG_SIZE	300
 
@@ -438,66 +461,23 @@ void ioinit (void)
 	ACSR = _BV(ACD);		/* Disable analog comp */
 }
 
-__flash const unsigned char battery_states[][8] = {
-	{
-		0b01110,
-		0b11111,
-		0b11111,
-		0b11111,
-		0b11111,
-		0b11111,
-		0b11111,
-		0b11111,
-	},
-	{
-		0b01110,
-		0b11111,
-		0b10001,
-		0b11111,
-		0b11111,
-		0b11111,
-		0b11111,
-		0b11111,
-	},
-	{
-		0b01110,
-		0b11111,
-		0b10001,
-		0b10001,
-		0b10001,
-		0b11111,
-		0b11111,
-		0b11111,
-	},
-	{
-		0b01110,
-		0b11111,
-		0b10001,
-		0b10001,
-		0b10001,
-		0b10001,
-		0b10001,
-		0b11111,
-	},
-};
-
-void battery_state_display(void) {
-	unsigned char i;
-	unsigned char index;
-	if (System.bat_volt > 4.0)
-		index = 0;
-	else if (System.bat_volt > 3.7)
-		index = 1;
-	else if (System.bat_volt > 3.4)
-		index = 2;
-	else
-		index = 3;
-	
-	LCD_WriteCommand(0x40 + 0); // 0x00
-
-	for(i=0; i<8; i++){
-		LCD_WriteData(battery_states[index][i]);
-	};
+void close_files(unsigned char flush_logs) {
+	UINT bw;
+	if (FLAGS & F_FILEOPEN) {
+		if (f_close(&gps_log))
+			System.status = STATUS_FILE_CLOSE_ERROR;
+		if (gpx_close(&gpx_file))
+			System.status = STATUS_FILE_CLOSE_ERROR;
+		if (flush_logs && logbuf.len && !f_write(&system_log, logbuf.buf, logbuf.len, &bw)) {
+			logbuf.len = 0;
+		}
+		if (f_close(&system_log))
+			System.status = STATUS_FILE_CLOSE_ERROR;
+		xputs_P(PSTR("File closed\r\n"));
+		display_state(DISPLAY_STATE_FILE_CLOSED);
+	}
+	FLAGS &= ~F_FILEOPEN;
+	disk_ioctl(0, CTRL_POWER, 0);
 }
 
 __flash const char __open_msg[] = "Open %s\r\n";
@@ -517,18 +497,15 @@ int main (void)
 	ioinit();
 	xdev_out(log_put);
 	xputs_P(PSTR("STARTUP\r\n"));
-	LCD_GoTo(0,0);
-	LCD_WriteTextP(PSTR("Uruchamianie... "));
+	display_state(DISPLAY_STATE_STARTUP);
 	
 	for (;;) {
 		wdt_reset();
 		if (FLAGS & (F_POWEROFF | F_LVD)) {
 			xputs_P(PSTR("POWEROFF\r\n"));
-			LCD_GoTo(0,0);
-			LCD_WriteTextP(PSTR("Wylaczanie...   "));
+			display_state(DISPLAY_STATE_POWEROFF);
 			if (FLAGS & F_LVD) {
-				LCD_GoTo(0,1);
-				LCD_WriteTextP(PSTR("Bateria slaba!  "));
+				display_state(DISPLAY_STATE_POWEROFF_LOWBAT);
 				_delay_ms(500);
 			}
 			POWEROFF();
@@ -539,19 +516,7 @@ int main (void)
 			xputs_P(PSTR("RESTART\r\n"));
 		}
 
-		LCD_GoTo(0,0);
-		LCD_WriteTextP(PSTR("Start           "));
-		LCD_GoTo(0,1);
-		switch(System.status){
-			case STATUS_NO_POWER: case STATUS_OK: case STATUS_NO_GPS: LCD_WriteTextP(PSTR("                ")); break;
-			case STATUS_NO_DISK:			LCD_WriteTextP(PSTR("Brak karty!     ")); break;
-			case STATUS_DISK_ERROR:			LCD_WriteTextP(PSTR("Blad karty!     ")); break;
-			case STATUS_FILE_WRITE_ERROR:	LCD_WriteTextP(PSTR("Blad zapisu!    ")); break;
-			case STATUS_FILE_SYNC_ERROR:	LCD_WriteTextP(PSTR("Blad zapisu FAT!")); break;
-			case STATUS_FILE_CLOSE_ERROR:	LCD_WriteTextP(PSTR("Blad zamk.pliku!")); break;
-			case STATUS_FILE_OPEN_ERROR:	LCD_WriteTextP(PSTR("Blad otw. pliku!")); break;
-		}
-
+		display_state(DISPLAY_STATE_START_MESSAGE);
 		xprintf(PSTR("LOOP err=%u\r\n"), (unsigned int)System.status);
 		utc = 0;
 		localtime = 0;
@@ -580,11 +545,7 @@ int main (void)
 		}
 		System.status = STATUS_NO_GPS;
 		xputs(PSTR("FS Ok\r\n"));
-		LCD_GoTo(0,0);
-		LCD_WriteTextP(PSTR("Karta OK!      "));
-		LCD_WriteData(0); /* battery symbol */
-		LCD_GoTo(0,1);
-		LCD_WriteTextP(PSTR("Czekam na GPS..."));
+		display_state(DISPLAY_STATE_CARD_OK);
 		beep(50, 1);				/* 1 beep */
 
 		/* Initialize GPS receiver */
@@ -596,7 +557,7 @@ int main (void)
 
 		for (;;) { /* main loop */
 			wdt_reset();
-			battery_state_display();
+			display_refresh(DISPLAY_STATE_NO_CHANGE);
 			gettemp();
 
 			if (!(FLAGS & F_GPSOK))
@@ -608,7 +569,7 @@ int main (void)
 				continue;
 			}
 
-			tmp_utc = gp_rmctime(Line);
+			tmp_utc = gps_parse(Line);
 			if (tmp_utc) {
 				localtime = tmp_utc + LOCALDIFF * 3600L;	/* Local time */
 				ct = *gmtime(&localtime);
@@ -626,6 +587,25 @@ int main (void)
 				LEDG_OFF();
 			}
 
+			if (FLAGS & F_FILEOPEN) {
+				f_write(&gps_log, Line, len, &bw);
+				if (bw != len) {
+					System.status = STATUS_FILE_WRITE_ERROR;
+					break;
+				}
+				if (System.location_valid) /* a new point */
+					gpx_process_point(&location, &gpx_file);
+				wdt_reset();
+				if (FLAGS & F_SYNC) {
+					if (f_sync(&gps_log)) {
+						System.status = STATUS_FILE_SYNC_ERROR;
+						break;
+					}
+					FLAGS &= ~F_SYNC;
+				}
+			}
+			System.location_valid = 0;
+
 			if (localtime && !(FLAGS & F_FILEOPEN)) {
 				xsprintf(Line, PSTR("%04u-%02u-%02u_%02u-%02u-%02u.LOG"), ct.tm_year+1900, ct.tm_mon + 1, ct.tm_mday, ct.tm_hour, ct.tm_min, ct.tm_sec);
 				xprintf(__open_msg, Line);
@@ -636,6 +616,7 @@ int main (void)
 					System.status = STATUS_FILE_OPEN_ERROR;
 					break;	/* Failed to start logging */
 				}
+				wdt_reset();
 
 				xsprintf(Line, PSTR("%04u-%02u-%02u_%02u-%02u-%02u.GPX"), ct.tm_year+1900, ct.tm_mon + 1, ct.tm_mday, ct.tm_hour, ct.tm_min, ct.tm_sec);
 				xprintf(__open_msg, Line);
@@ -647,6 +628,7 @@ int main (void)
 					System.status = STATUS_FILE_OPEN_ERROR;
 					break;	/* Failed to start logging */
 				}
+				wdt_reset();
 
 				xsprintf(Line, PSTR("%04u-%02u-%02u_%02u-%02u-%02u-SYSTEM.LOG"), ct.tm_year+1900, ct.tm_mon + 1, ct.tm_mday, ct.tm_hour, ct.tm_min, ct.tm_sec);
 				xprintf(__open_msg, Line);
@@ -659,29 +641,13 @@ int main (void)
 					System.status = STATUS_FILE_OPEN_ERROR;
 					break;	/* Failed to start logging */
 				}
+				wdt_reset();
 
 				FLAGS |= F_FILEOPEN;
 				System.status = STATUS_OK;
 				beep(50, 2);		/* Two beeps. Start logging. */
-				LCD_GoTo(0,1);
-				LCD_WriteTextP(PSTR("Zapis aktywny   "));
+				display_state(DISPLAY_STATE_FILE_OPEN);
 				continue;
-			}
-			if (FLAGS & F_FILEOPEN) {
-				f_write(&gps_log, Line, len, &bw);
-				if (bw != len) {
-					System.status = STATUS_FILE_WRITE_ERROR;
-					break;
-				}
-				if(tmp_utc) /* a new point */
-					gpx_process_point(&location, &gpx_file);
-				if (FLAGS & F_SYNC) {
-					if (f_sync(&gps_log)) {
-						System.status = STATUS_FILE_SYNC_ERROR;
-						break;
-					}
-					FLAGS &= ~F_SYNC;
-				}
 			}
 		}
 
@@ -691,22 +657,7 @@ int main (void)
 		FLAGS &= ~F_POW;
 
 		/* Close file */
-		if (FLAGS & F_FILEOPEN) {
-			if (f_close(&gps_log))
-				System.status = STATUS_FILE_CLOSE_ERROR;
-			if (gpx_close(&gpx_file))
-				System.status = STATUS_FILE_CLOSE_ERROR;
-			if (logbuf.len && !f_write(&system_log, logbuf.buf, logbuf.len, &bw)) {
-				logbuf.len = 0;
-			}
-			if (f_close(&system_log))
-				System.status = STATUS_FILE_CLOSE_ERROR;
-			xputs_P(PSTR("File closed\r\n"));
-			LCD_GoTo(0,1);
-			LCD_WriteTextP(PSTR("Pliki zamkniete "));
-		}
-		FLAGS &= ~F_FILEOPEN;
-		disk_ioctl(0, CTRL_POWER, 0);
+		close_files(1);
 		if (System.status != STATUS_FILE_CLOSE_ERROR)
 			beep(500, 1);	/* Long beep on file close succeeded */
 	}

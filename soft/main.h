@@ -107,6 +107,7 @@ struct timers {
 	unsigned int beep;
 	unsigned int recv_timeout;
 	unsigned int system_log;
+	unsigned int lcd;
 };
 
 struct system_s {
@@ -116,8 +117,10 @@ struct system_s {
 	float bat_volt;
 	float temperature;
 	unsigned char temperature_ok;
+	unsigned char satellites_used;
+	unsigned char display_state;
+	unsigned char location_valid;
 };
-
 
 struct location_s {
 	float lon;
@@ -152,4 +155,6 @@ static inline unsigned int atomic_get_uint(volatile unsigned int *volatile data)
 
 void disk_timerproc (void); /* mmc.h */
 const char *get_iso_time(time_t time);
+void close_files(unsigned char flush_logs);
+
 

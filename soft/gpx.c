@@ -10,8 +10,13 @@
 #define KALMAN_R	4e-5
 #define KALMAN_ERR_MAX	6e-4
 
+__flash const char xml_header[] = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		"<gpx xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://www.topografix.com/GPX/1/1\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\" version=\"1.1\" creator=\"k4be\">\n"
+		"\t<trk>\n"
+		"\t\t<trkseg>\n";
+
 FIL gpx_file;
-static char buf[256];
+static char buf[sizeof(xml_header)+1];
 
 struct kalman_s {
 	unsigned char initialized;
@@ -76,12 +81,8 @@ unsigned char gpx_init(FIL *file) {
 	last_saved.lon = 0;
 	last_saved.lat = 0;
 	last_saved.time = 0;
-	
-	strcpy_P(buf, PSTR("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-		"<gpx xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://www.topografix.com/GPX/1/1\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\" version=\"1.1\" creator=\"k4be\">\n"
-		"\t<trk>\n"
-		"\t\t<trkseg>\n"
-	));
+
+	strcpy_P(buf, xml_header);
 	return f_write(file, buf, strlen(buf), &bw);
 }
 
