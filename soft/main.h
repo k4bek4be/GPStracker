@@ -7,7 +7,6 @@
 #include "stime.h"
 #include "expander.h"
 
-#define LOCALDIFF	+1			/* Time difference from UTC [hours] */
 #define	IVT_SYNC	180			/* f_sync() interval (0:no periodic sync) [sec] */
 #define POWER_SW_TIME	300		/* power switch hold time to power off [10ms] */
 
@@ -168,7 +167,7 @@ static inline unsigned int atomic_get_uint(volatile unsigned int *volatile data)
 
 
 void disk_timerproc (void); /* mmc.h */
-const char *get_iso_time(time_t time);
+char *get_iso_time(time_t time, unsigned char local);
 void close_files(unsigned char flush_logs);
 unsigned char getkey(void);
 

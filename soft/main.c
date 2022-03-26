@@ -25,7 +25,7 @@
 #include "gpx.h"
 #include "display.h"
 #include "working_modes.h"
-
+#include "timec.h"
 
 /*FUSES = {0xFF, 0x11, 0xFE};*/		/* ATmega644PA fuses: Low, High, Extended.
 This is the fuse settings for this project. The fuse bits will be included
@@ -166,23 +166,6 @@ ISR(ADC_vect)
 	}
 }
 
-/*---------------------------------------------------------*/
-/* User Provided Timer Function for FatFs module           */
-/*---------------------------------------------------------*/
-
-DWORD get_fattime (void)
-{
-	struct tm *stm;
-	time_t localtime = utc + LOCALDIFF;
-	stm = gmtime(&localtime);
-    return (DWORD)(stm->tm_year - 80) << 25 |
-           (DWORD)(stm->tm_mon + 1) << 21 |
-           (DWORD)stm->tm_mday << 16 |
-           (DWORD)stm->tm_hour << 11 |
-           (DWORD)stm->tm_min << 5 |
-           (DWORD)stm->tm_sec >> 1;
-}
-
 static void sleep(void) {
 	set_sleep_mode(SLEEP_MODE_IDLE);
 	sleep_enable();
@@ -243,16 +226,6 @@ void beep (UINT len, BYTE cnt)
 		set_timer(beep, len);
 		while(!timer_expired(beep)) {};
 	}
-}
-
-
-/* Make ISO time string */
-const char *get_iso_time(time_t time) {
-	static char output[32];
-	struct tm *ct = gmtime(&time);
-
-	xsprintf(output, PSTR("%4u-%02u-%02uT%02u:%02u:%02u.000Z"), ct->tm_year+1900, ct->tm_mon+1, ct->tm_mday, ct->tm_hour, ct->tm_min, ct->tm_sec);
-	return output;
 }
 
 /* Compare sentence header string */
@@ -597,7 +570,7 @@ int main (void)
 
 			tmp_utc = gps_parse(Line);
 			if (tmp_utc) {
-				localtime = tmp_utc + LOCALDIFF * 3600L;	/* Local time */
+				localtime = tmp_utc + local_time_diff(tmp_utc) * 3600L;	/* Local time */
 				ct = *gmtime(&localtime);
 				if (timer_expired(system_log)) {
 					set_timer(system_log, 5000);
@@ -635,7 +608,16 @@ int main (void)
 			}
 
 			if (localtime && !(FLAGS & F_FILEOPEN)) {
-				xsprintf(Line, PSTR("%04u-%02u-%02u_%02u-%02u-%02u.LOG"), ct.tm_year+1900, ct.tm_mon + 1, ct.tm_mday, ct.tm_hour, ct.tm_min, ct.tm_sec);
+				char *time = get_iso_time(utc, 1);
+				char *ptr = time;
+				while (*ptr) {
+					switch (*ptr) {
+						case ':': *ptr = '-'; break;
+						case '+': *ptr = 'p'; break;
+					}
+					ptr++;
+				}
+				xsprintf(Line, PSTR("%s-NMEA.LOG"), time);
 				xprintf(__open_msg, Line);
 				if (f_open(&gps_log, Line, FA_WRITE | FA_OPEN_ALWAYS)		/* Open log file */
 					|| f_lseek(&gps_log, f_size(&gps_log)) 					/* Append mode */
@@ -646,7 +628,7 @@ int main (void)
 				}
 				wdt_reset();
 
-				xsprintf(Line, PSTR("%04u-%02u-%02u_%02u-%02u-%02u.GPX"), ct.tm_year+1900, ct.tm_mon + 1, ct.tm_mday, ct.tm_hour, ct.tm_min, ct.tm_sec);
+				xsprintf(Line, PSTR("%s.GPX"), time);
 				xprintf(__open_msg, Line);
 				if (f_open(&gpx_file, Line, FA_WRITE | FA_OPEN_ALWAYS)		/* Open log file */
 					|| f_lseek(&gpx_file, f_size(&gpx_file)) 				/* Append mode */
@@ -658,7 +640,7 @@ int main (void)
 				}
 				wdt_reset();
 
-				xsprintf(Line, PSTR("%04u-%02u-%02u_%02u-%02u-%02u-SYSTEM.LOG"), ct.tm_year+1900, ct.tm_mon + 1, ct.tm_mday, ct.tm_hour, ct.tm_min, ct.tm_sec);
+				xsprintf(Line, PSTR("%s-SYSTEM.LOG"), time);
 				xprintf(__open_msg, Line);
 				if (f_open(&system_log, Line, FA_WRITE | FA_OPEN_ALWAYS)	/* Open log file */
 					|| f_lseek(&system_log, f_size(&system_log)) 			/* Append mode */

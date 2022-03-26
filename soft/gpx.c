@@ -90,7 +90,7 @@ unsigned char gpx_write(struct location_s *loc, FIL *file) {
 	unsigned int bw;
 	const char *time;
 	
-	time = get_iso_time(loc->time);
+	time = get_iso_time(loc->time, 0);
 	xsprintf(buf, PSTR("\t\t\t<trkpt lat=\"%.8f\" lon=\"%.8f\">\n\t\t\t\t<time>%s</time>\n"), loc->lat, loc->lon, time);
 	/* alt */
 	strcat_P(buf, PSTR("\t\t\t</trkpt>\n"));
