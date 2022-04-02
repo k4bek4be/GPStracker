@@ -97,22 +97,34 @@ void disp_func_start_message(__attribute__ ((unused)) unsigned char changed) {
 	}
 }
 
+__flash const char _gps_wait[] =		"Czekam na GPS...";
+__flash const char _gps_ok[] =			"GPS OK!";
+__flash const char _card_ok[] =			"Karta OK!";
+__flash const char _logging_active[] =	"Zapis aktywny";
+
 void disp_func_card_ok(__attribute__ ((unused)) unsigned char changed) {
-	strcpy_P(disp.line1, PSTR("Karta OK!"));
-	strcpy_P(disp.line2, PSTR("Czekam na GPS..."));
+	strcpy_P(disp.line1, _card_ok);
+	strcpy_P(disp.line2, _gps_wait);
 }
 
 void disp_func_file_open(__attribute__ ((unused)) unsigned char changed) {
-	strcpy_P(disp.line2, PSTR("Zapis aktywny"));
+	strcpy_P(disp.line2, _logging_active);
 }
 
 void disp_func_file_closed(__attribute__ ((unused)) unsigned char changed) {
 	strcpy_P(disp.line2, PSTR("Pliki zamkniete"));
 }
 
-void disp_func_main_default(unsigned char changed) {
-	disp.line1[0] = '\0';
-	disp_func_file_open(changed);
+void disp_func_main_default(__attribute__ ((unused)) unsigned char changed) {
+	if (FLAGS & F_FILEOPEN)
+		strcpy_P(disp.line1, _logging_active);
+	else
+		strcpy_P(disp.line1, _card_ok);
+
+	if (FLAGS & F_GPSOK)
+		strcpy_P(disp.line2, _gps_ok);
+	else
+		strcpy_P(disp.line2, _gps_wait);
 }
 
 void disp_func_coord(__attribute__ ((unused)) unsigned char changed) {
@@ -134,6 +146,12 @@ void disp_func_ele_sat(__attribute__ ((unused)) unsigned char changed) {
 	xsprintf(disp.line2, PSTR("%d satelit"), System.satellites_used);
 }
 
+void disp_func_main_menu(__attribute__ ((unused)) unsigned char changed) {
+	strcpy_P(disp.line1, PSTR("  *** MENU *** "));
+	disp.line2[0] = '>';
+	disp.line2[1] = '\0';
+}
+
 void (*__flash const disp_funcs[])(unsigned char) = {
 	[DISPLAY_STATE_STARTUP] = disp_func_startup,
 	[DISPLAY_STATE_POWEROFF] = disp_func_poweroff,
@@ -145,6 +163,7 @@ void (*__flash const disp_funcs[])(unsigned char) = {
 	[DISPLAY_STATE_MAIN_DEFAULT] = disp_func_main_default,
 	[DISPLAY_STATE_COORD] = disp_func_coord,
 	[DISPLAY_STATE_ELE_SAT] = disp_func_ele_sat,
+	[DISPLAY_STATE_MAIN_MENU] = disp_func_main_menu,
 };
 
 void display_refresh(unsigned char newstate) {

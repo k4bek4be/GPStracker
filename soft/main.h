@@ -9,6 +9,7 @@
 
 #define	IVT_SYNC	180			/* f_sync() interval (0:no periodic sync) [sec] */
 #define POWER_SW_TIME	300		/* power switch hold time to power off [10ms] */
+#define BACKLIGHT_TIME	10000
 
 //#define	VI_LVL		4.2			/* Blackout threshold [volt] */
 //#define	VI_LVH		4.8			/* Recharge threshold [volt] */
@@ -58,6 +59,9 @@
 #define LEDB_PORT		1 /* expander */
 #define LEDB			_BV(5)
 
+#define LEDW_PORT		1 /* expander */
+#define LEDW			_BV(7)
+
 /* on/off macros */
 
 #define	BEEP_ON()		{BUZZER_PORT |= BUZZER;}
@@ -68,6 +72,8 @@
 #define	LEDG_OFF()		expander_set_bit(LEDG_PORT, LEDG, 0)
 #define	LEDB_ON()		expander_set_bit(LEDB_PORT, LEDB, 1)
 #define	LEDB_OFF()		expander_set_bit(LEDB_PORT, LEDB, 0)
+#define	LEDW_ON()		expander_set_bit(LEDW_PORT, LEDW, 1)
+#define	LEDW_OFF()		expander_set_bit(LEDW_PORT, LEDW, 0)
 #define GPS_ON()		{GPS_DIS_PORT &= ~GPS_DIS;}
 #define GPS_OFF()		{GPS_DIS_PORT |= GPS_DIS;}
 #define POWEROFF()		{POWER_ON_PORT &= ~POWER_ON;}
@@ -119,6 +125,7 @@ struct timers {
 	unsigned int recv_timeout;
 	unsigned int system_log;
 	unsigned int lcd;
+	unsigned int backlight;
 };
 
 struct system_s {

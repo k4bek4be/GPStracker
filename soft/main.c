@@ -105,6 +105,7 @@ ISR(TIMER1_COMPA_vect)
 			FLAGS |= F_POWEROFF;
 			power_sw++;
 		}
+		System.timers.backlight = ms(BACKLIGHT_TIME);
 	} else {
 		power_sw = 0;
 	}
@@ -558,6 +559,10 @@ int main (void)
 			display_refresh(DISPLAY_STATE_NO_CHANGE);
 			gettemp();
 			key_process();
+			if (System.timers.backlight)
+				LEDW_ON();
+			else
+				LEDW_OFF();
 
 			if (!(FLAGS & F_GPSOK))
 				xputs_P(PSTR("Waiting for GPS\r\n"));

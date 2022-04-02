@@ -11,6 +11,7 @@
 #define DISPLAY_STATE_MAIN_DEFAULT	8
 #define DISPLAY_STATE_COORD	9
 #define DISPLAY_STATE_ELE_SAT	10
+#define DISPLAY_STATE_MAIN_MENU	11
 
 void display_refresh(unsigned char newstate);
 void display_state(unsigned char newstate);
