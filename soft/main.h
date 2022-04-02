@@ -177,4 +177,5 @@ void disk_timerproc (void); /* mmc.h */
 char *get_iso_time(time_t time, unsigned char local);
 void close_files(unsigned char flush_logs);
 unsigned char getkey(void);
+void sleep(void);
 
