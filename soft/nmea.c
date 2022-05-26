@@ -180,10 +180,10 @@ static void gp_gga_parse(const char *str) {
 }
 
 time_t gps_parse(const char *str) {	/* Get all required data from NMEA sentences */
-	if (!gp_comp(str, PSTR("$GPRMC"))) {
+	if (!gp_comp(str, PSTR("$GPRMC")) || !gp_comp(str, PSTR("$GNRMC"))) {
 		return gp_rmc_parse(str);
 	}
-	if (!gp_comp(str, PSTR("$GPGGA"))) {
+	if (!gp_comp(str, PSTR("$GPGGA")) || !gp_comp(str, PSTR("$GNGGA"))) {
 		gp_gga_parse(str);
 		return 0;
 	}

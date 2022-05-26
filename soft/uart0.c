@@ -25,7 +25,7 @@
 #define	USE_TXINT		0
 #define	SZ_FIFO			512
 #define RECEIVE			1
-#define TRANSMIT		0
+#define TRANSMIT		1
 
 #include "uart.c"
 

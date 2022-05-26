@@ -267,6 +267,10 @@ void close_files(unsigned char flush_logs) {
 	disk_ioctl(0, CTRL_POWER, 0);
 }
 
+void uart0_put_wrap(int c) {
+	uart0_put((char)c);
+}
+
 __flash const char __open_msg[] = "Open %s\r\n";
 
 /*-----------------------------------------------------------------------*/
@@ -340,7 +344,7 @@ int main (void)
 		FLAGS |= F_POW;
 		_delay_ms(300);	/* Delay */
 		uart0_init();	/* Enable UART */
-//		xfprintf(uart0_put, PSTR("$PSRF106,21*0F\r\n"));	/* Send initialization command (depends on the receiver) */
+		xfprintf(uart0_put_wrap, PSTR("$PMTK353,1,1,1,0,0*2A\r\n$PMTK313,1*2E\r\n"));	/* Send initialization command (depends on the receiver) */
 
 		for (;;) { /* main loop */
 			wdt_reset();
