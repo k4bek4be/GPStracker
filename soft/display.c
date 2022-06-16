@@ -3,6 +3,7 @@
 #include "display.h"
 #include "HD44780-I2C.h"
 #include "xprintf.h"
+#include "working_modes.h"
 
 __flash const unsigned char battery_states[][8] = {
 	{
@@ -47,10 +48,35 @@ __flash const unsigned char battery_states[][8] = {
 	},
 };
 
-struct disp_s {
-	char line1[16];
-	char line2[17];
-} disp;
+__flash const unsigned char custom_chars[] = {
+	0b00000, /* 0x01 down arrow */
+	0b00100,
+	0b00100,
+	0b00100,
+	0b10101,
+	0b01110,
+	0b00100,
+	0b00000,
+	
+	0b00000, /* 0x02 up arrow */
+	0b00100,
+	0b01110,
+	0b10101,
+	0b00100,
+	0b00100,
+	0b00100,
+	0b00000,
+};
+
+struct disp_s disp;
+
+void disp_init(void) { /* send custom characters starting with 0x01 */
+	unsigned char i;
+	LCD_WriteCommand(0x40 + 8); // 0x01
+	for(i=0; i<sizeof(custom_chars); i++){
+		LCD_WriteData(custom_chars[i]);
+	};
+}
 
 void battery_state_display(void) {
 	unsigned char i;
@@ -143,13 +169,18 @@ void disp_func_ele_sat(__attribute__ ((unused)) unsigned char changed) {
 	} else {
 		xsprintf(disp.line1, PSTR("ele = %.1fm"), location.alt);
 	}
-	xsprintf(disp.line2, PSTR("%d satelit"), System.satellites_used);
+	xsprintf(disp.line2, PSTR("%2d satelit"), System.satellites_used);
+	if (System.sbas)
+		strcat_P(disp.line2, PSTR(", DGPS"));
 }
 
 void disp_func_main_menu(__attribute__ ((unused)) unsigned char changed) {
 	strcpy_P(disp.line1, PSTR("  *** MENU *** "));
-	disp.line2[0] = '>';
-	disp.line2[1] = '\0';
+	strcpy_P(disp.line2, PSTR("> Ustawienia"));
+}
+
+void disp_func_settings_menu(__attribute__ ((unused)) unsigned char changed) {
+	display_settings_menu_item();
 }
 
 void (*__flash const disp_funcs[])(unsigned char) = {
@@ -164,6 +195,7 @@ void (*__flash const disp_funcs[])(unsigned char) = {
 	[DISPLAY_STATE_COORD] = disp_func_coord,
 	[DISPLAY_STATE_ELE_SAT] = disp_func_ele_sat,
 	[DISPLAY_STATE_MAIN_MENU] = disp_func_main_menu,
+	[DISPLAY_STATE_SETTINGS_MENU] = disp_func_settings_menu,
 };
 
 void display_refresh(unsigned char newstate) {

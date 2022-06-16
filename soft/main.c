@@ -27,6 +27,7 @@
 #include "working_modes.h"
 #include "timec.h"
 #include "nmea.h"
+#include "settings.h"
 
 /*FUSES = {0xFF, 0x11, 0xFE};*/		/* ATmega644PA fuses: Low, High, Extended.
 This is the fuse settings for this project. The fuse bits will be included
@@ -288,7 +289,9 @@ int main (void)
 	ioinit();
 	xdev_out(log_put);
 	xputs_P(PSTR("STARTUP\r\n"));
+	disp_init();
 	display_state(DISPLAY_STATE_STARTUP);
+	settings_load();
 	
 	for (;;) {
 		wdt_reset();
@@ -377,6 +380,10 @@ int main (void)
 						xprintf(PSTR("Temp: %.2f\r\n"), System.temperature);
 					else
 						xputs_P(PSTR("Temperature unknown\r\n"));
+					if (System.sbas)
+						xputs_P(PSTR("SBAS (DGPS) active\r\n"));
+					else
+						xputs_P(PSTR("SBAS inactive\r\n"));
 				}
 				LEDG_ON();
 				_delay_ms(2);
@@ -467,6 +474,8 @@ int main (void)
 		close_files(1);
 		if (System.status != STATUS_FILE_CLOSE_ERROR)
 			beep(500, 1);	/* Long beep on file close succeeded */
+		
+		settings_store(); /* save eeprom data */
 	}
 
 }

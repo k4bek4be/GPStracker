@@ -168,6 +168,12 @@ static void gp_gga_parse(const char *str) {
 	p = gp_col(str, 5); /* E/W */
 	if (*p != 'E')
 		location.lon = -location.lon;
+	
+	p = gp_col(str, 6); /* fix type */
+	if (*p == '2')
+		System.sbas = 1;
+	else
+		System.sbas = 0;
 
 	p = gp_col(str, 7); /* satellites used */
 	System.satellites_used = atoi(p);

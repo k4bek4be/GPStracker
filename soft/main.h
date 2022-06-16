@@ -6,6 +6,7 @@
 #include <avr/interrupt.h>
 #include "stime.h"
 #include "expander.h"
+#include "settings.h"
 
 #define	IVT_SYNC	180			/* f_sync() interval (0:no periodic sync) [sec] */
 #define POWER_SW_TIME	300		/* power switch hold time to power off [10ms] */
@@ -130,16 +131,18 @@ struct timers {
 
 struct system_s {
 	struct timers timers;
+	struct config_s conf;
 	unsigned int global_error;
 	unsigned char status;
 	float bat_volt;
 	float temperature;
-	unsigned char temperature_ok;
-	unsigned char satellites_used;
 	unsigned char display_state;
-	unsigned char location_valid;
 	unsigned char keypress;
 	unsigned char working_mode;
+	unsigned temperature_ok:1;
+	unsigned satellites_used:5;
+	unsigned location_valid:2;
+	unsigned sbas:1;
 };
 
 struct location_s {

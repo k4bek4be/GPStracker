@@ -2,7 +2,7 @@
 PROJECT	= glg
 
 ### Source files and search directory
-CSRC    = main.c uart0.c uart1.c ff.c mmc.c 1wire.c ds18b20.c expander.c HD44780-I2C.c I2C.c xprintf.c gpx.c ffunicode.c display.c working_modes.o timec.o nmea.o
+CSRC    = main.c uart0.c uart1.c ff.c mmc.c 1wire.c ds18b20.c expander.c HD44780-I2C.c I2C.c xprintf.c gpx.c ffunicode.c display.c working_modes.o timec.o nmea.o settings.o
 ASRC    = stime.S
 VPATH   =
 
@@ -60,7 +60,7 @@ PROJECT   := $(OBJDIR)/$(PROJECT)
 CFLAGS += -g$(DEBUG)
 CFLAGS += -mmcu=$(DEVICE)
 CFLAGS += -O$(OPTIMIZE) -mcall-prologues
-CFLAGS += $(addprefix -W,$(WARNINGS))
+CFLAGS += $(addprefix -W,$(WARNINGS)) --param=min-pagesize=0
 CFLAGS += $(addprefix -I,$(INCDIRS))
 CFLAGS += $(addprefix -D,$(DEFS))
 CFLAGS += -Wp,-MM,-MP,-MT,$(OBJDIR)/$(*F).o,-MF,$(OBJDIR)/$(*F).d
@@ -108,7 +108,8 @@ version :
 # Create final output file from ELF output file.
 %.hex: %.elf
 	@echo
-	$(OBJCOPY) -j .text -j .data -j .eeprom -j .fuse -O $(HEXFMT) $< $@
+#	$(OBJCOPY) -j .text -j .data -j .eeprom -j .fuse -O $(HEXFMT) $< $@
+	$(OBJCOPY) -j .text -j .data -O $(HEXFMT) $< $@
 
 %.bin: %.elf
 	@echo
@@ -128,6 +129,7 @@ version :
 size:
 	@echo
 	$(SIZE) $(PROJECT).elf
+	$(SIZE) $(PROJECT).hex
 
 
 # Link: create ELF output file from object files.

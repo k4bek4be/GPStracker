@@ -5,6 +5,7 @@
 #include "main.h"
 #include "gpx.h"
 #include "ff.h"
+#include "settings.h"
 
 #define KALMAN_Q	8.5e-6
 #define KALMAN_R	4e-5
@@ -109,62 +110,67 @@ void gpx_process_point(struct location_s *loc, FIL *file){
 	struct location_s *ptr;
 	struct location_s nloc;
 	
-	lat_est = kalman_predict(&kalman[0], loc->lat);
-	lon_est = kalman_predict(&kalman[1], loc->lon);
-	
-	lat_err = fabs(loc->lat - lat_est);
-	lon_err = fabs(loc->lon - lon_est);
-//	xprintf(PSTR("lat_err: %e, lon_err: %e, limit: %e\r\n"), lat_err, lon_err, (float)KALMAN_ERR_MAX);
-	if(lat_err > KALMAN_ERR_MAX || lon_err > KALMAN_ERR_MAX){
-		xputs_P(PSTR("KALMAN REJECT\r\n"));
-		return;
-	}
-	loc->lat = lat_est;
-	loc->lon = lon_est;
-	
-	prev_points_append(loc);
-	if(prev_points.count == PREV_POINTS_LENGTH){
-		float dist12 = distance(prev_points_get(0), prev_points_get(1));
-		float dist34 = distance(prev_points_get(2), prev_points_get(3));
-		float dist32 = distance(prev_points_get(2), prev_points_get(1));
-		xprintf(PSTR("New distance: %fm\r\n"), dist32);
-		if(dist34 > dist12 && dist32 > dist12){
-			xputs_P(PSTR("DISTANCE DIFF REJECT\r\n"));
-			return;
-		}
-		ptr = prev_points_get(PREV_POINTS_LENGTH - 2);
+	if (get_flag(CONFFLAG_DISABLE_FILTERS)) {
+		xputs_P(PSTR("Write with filters disabled\r\n"));
+		gpx_write(loc, file);
 	} else {
-		if(prev_points.count >= PREV_POINTS_LENGTH-2){
-			ptr = prev_points_get(prev_points.count - 2);
-			xputs_P(PSTR("NEW\r\n"));
-		} else {
+		lat_est = kalman_predict(&kalman[0], loc->lat);
+		lon_est = kalman_predict(&kalman[1], loc->lon);
+		
+		lat_err = fabs(loc->lat - lat_est);
+		lon_err = fabs(loc->lon - lon_est);
+	//	xprintf(PSTR("lat_err: %e, lon_err: %e, limit: %e\r\n"), lat_err, lon_err, (float)KALMAN_ERR_MAX);
+		if(lat_err > KALMAN_ERR_MAX || lon_err > KALMAN_ERR_MAX){
+			xputs_P(PSTR("KALMAN REJECT\r\n"));
 			return;
 		}
-	}
+		loc->lat = lat_est;
+		loc->lon = lon_est;
+		
+		prev_points_append(loc);
+		if(prev_points.count == PREV_POINTS_LENGTH){
+			float dist12 = distance(prev_points_get(0), prev_points_get(1));
+			float dist34 = distance(prev_points_get(2), prev_points_get(3));
+			float dist32 = distance(prev_points_get(2), prev_points_get(1));
+			xprintf(PSTR("New distance: %fm\r\n"), dist32);
+			if(dist34 > dist12 && dist32 > dist12){
+				xputs_P(PSTR("DISTANCE DIFF REJECT\r\n"));
+				return;
+			}
+			ptr = prev_points_get(PREV_POINTS_LENGTH - 2);
+		} else {
+			if(prev_points.count >= PREV_POINTS_LENGTH-2){
+				ptr = prev_points_get(prev_points.count - 2);
+				xputs_P(PSTR("NEW\r\n"));
+			} else {
+				return;
+			}
+		}
 
-	if(distance(&last_saved, ptr) < MIN_DIST_DELTA){
-		xputs_P(PSTR("Too small position change REJECT\r\n"));
-		return;
-	}
+		if(distance(&last_saved, ptr) < MIN_DIST_DELTA){
+			xputs_P(PSTR("Too small position change REJECT\r\n"));
+			return;
+		}
 
-	xputs_P(PSTR("ACCEPT\r\n"));
+		xputs_P(PSTR("ACCEPT\r\n"));
 
-	avg_store.lat += ptr->lat;
-	avg_store.lon += ptr->lon;
-	if(avg_count == AVG_COUNT/2)
-		avg_store.time = ptr->time;
-	
-	if(++avg_count == AVG_COUNT){
-		nloc.lat = avg_store.lat / AVG_COUNT;
-		nloc.lon = avg_store.lon / AVG_COUNT;
-		nloc.time = avg_store.time;
-		avg_count = 0;
-		avg_store.lat = 0;
-		avg_store.lon = 0;
-		avg_store.time = 0;
-		last_saved = nloc;
-		gpx_write(&nloc, file);
-		return;
+		avg_store.lat += ptr->lat;
+		avg_store.lon += ptr->lon;
+		if(avg_count == AVG_COUNT/2)
+			avg_store.time = ptr->time;
+		
+		if(++avg_count == AVG_COUNT){
+			nloc.lat = avg_store.lat / AVG_COUNT;
+			nloc.lon = avg_store.lon / AVG_COUNT;
+			nloc.time = avg_store.time;
+			avg_count = 0;
+			avg_store.lat = 0;
+			avg_store.lon = 0;
+			avg_store.time = 0;
+			last_saved = nloc;
+			gpx_write(&nloc, file);
+			return;
+		}
 	}
 }
 
