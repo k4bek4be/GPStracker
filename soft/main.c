@@ -219,6 +219,7 @@ void ioinit (void)
 	PORTA |= POWER_ON;
 	
 	BUZZER_DDR |= BUZZER;
+	GPS_OFF();
 	GPS_DIS_DDR |= GPS_DIS;
 	LEDR_DDR |= LEDR;
 
@@ -266,10 +267,6 @@ void close_files(unsigned char flush_logs) {
 	}
 	FLAGS &= ~F_FILEOPEN;
 	disk_ioctl(0, CTRL_POWER, 0);
-}
-
-void uart0_put_wrap(int c) {
-	uart0_put((char)c);
 }
 
 __flash const char __open_msg[] = "Open %s\r\n";
@@ -345,9 +342,10 @@ int main (void)
 		/* Initialize GPS receiver */
 		GPS_ON();		/* GPS power on */
 		FLAGS |= F_POW;
-		_delay_ms(300);	/* Delay */
+		_delay_ms(1);
 		uart0_init();	/* Enable UART */
-		xfprintf(uart0_put_wrap, PSTR("$PMTK353,1,1,1,0,0*2A\r\n$PMTK313,1*2E\r\n"));	/* Send initialization command (depends on the receiver) */
+		_delay_ms(300);	/* Delay */
+		System.gps_initialized = 0;
 
 		for (;;) { /* main loop */
 			wdt_reset();
@@ -384,6 +382,9 @@ int main (void)
 						xputs_P(PSTR("SBAS (DGPS) active\r\n"));
 					else
 						xputs_P(PSTR("SBAS inactive\r\n"));
+					xputs_P(PSTR("Using GNSS: "));
+					xputs_P(gnss_names[System.conf.gnss_mode]);
+					xputs_P(PSTR("\r\n"));
 				}
 				LEDG_ON();
 				_delay_ms(2);

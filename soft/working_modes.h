@@ -5,17 +5,8 @@
 #define MODE_MAIN_MENU	1
 #define MODE_SETTINGS_MENU	2
 
-#define SETTINGS_TYPE_BACK	0
-#define SETTINGS_TYPE_BOOL	1
-
 struct main_menu_pos_s {
 	unsigned char (* func)(void);
-};
-
-struct settings_menu_pos_s {
-	unsigned char type;
-	__flash const char *name;
-	unsigned char index;
 };
 
 struct menu_params_s {

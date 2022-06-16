@@ -4,6 +4,7 @@
 #include "HD44780-I2C.h"
 #include "xprintf.h"
 #include "settings.h"
+#include "nmea.h"
 
 static signed char display_mode_index;
 
@@ -18,23 +19,6 @@ __flash const struct main_menu_pos_s main_menu[] = {
 		.func = enter_settings,
 	},
 };
-
-__flash const char _msg_disable_filters[] = "Nie filtruj";
-__flash const char _msg_back[] = "< Powrot";
-
-__flash const struct settings_menu_pos_s settings_menu[] = {
-	{
-		.type = SETTINGS_TYPE_BACK,
-		.name = _msg_back,
-	},
-	{
-		.type = SETTINGS_TYPE_BOOL,
-		.name = _msg_disable_filters,
-		.index = CONFFLAG_DISABLE_FILTERS,
-	},
-};
-
-#define SETTINGS_MENU_MAXPOS	((sizeof(settings_menu) / sizeof(settings_menu[0])) - 1)
 
 struct menu_params_s mp;
 
@@ -74,9 +58,6 @@ unsigned char working_mode_main_menu(unsigned char k) {
 	return MODE_NO_CHANGE;
 }
 
-#define HAVE_NEXT_SETTING_POSITION (mp.settings_menu_pos < SETTINGS_MENU_MAXPOS)
-#define HAVE_PREV_SETTING_POSITION (mp.settings_menu_pos > 0)
-
 unsigned char working_mode_settings_menu(unsigned char k) {
 	switch (k) {
 		case K_LEFT:
@@ -84,8 +65,10 @@ unsigned char working_mode_settings_menu(unsigned char k) {
 				return MODE_MAIN_MENU;
 			/* fall through */
 		case K_RIGHT:
-			if (settings_menu[mp.settings_menu_pos].type == SETTINGS_TYPE_BOOL)
-				settings_display_and_modify_bool(settings_menu[mp.settings_menu_pos].index, settings_menu[mp.settings_menu_pos].name, k, HAVE_PREV_SETTING_POSITION, HAVE_NEXT_SETTING_POSITION);
+			switch (settings_menu[mp.settings_menu_pos].type) {
+				case SETTINGS_TYPE_BOOL: settings_display_and_modify_bool(mp.settings_menu_pos, k); break;
+				case SETTINGS_TYPE_U8: settings_display_and_modify_u8(mp.settings_menu_pos, k); break;
+			}
 			break;
 		case K_DOWN:
 			if (mp.settings_menu_pos < SETTINGS_MENU_MAXPOS)
@@ -102,7 +85,10 @@ unsigned char working_mode_settings_menu(unsigned char k) {
 void display_settings_menu_item(void) {
 	switch (settings_menu[mp.settings_menu_pos].type) {
 		case SETTINGS_TYPE_BOOL:
-			settings_display_and_modify_bool(settings_menu[mp.settings_menu_pos].index, settings_menu[mp.settings_menu_pos].name, 0, HAVE_PREV_SETTING_POSITION, HAVE_NEXT_SETTING_POSITION);
+			settings_display_and_modify_bool(mp.settings_menu_pos, 0);
+			break;
+		case SETTINGS_TYPE_U8:
+			settings_display_and_modify_u8(mp.settings_menu_pos, 0);
 			break;
 		case SETTINGS_TYPE_BACK:
 			strcpy_P(disp.line1, PSTR("* Ustawienia *"));

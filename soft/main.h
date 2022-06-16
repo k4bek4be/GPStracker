@@ -143,6 +143,8 @@ struct system_s {
 	unsigned satellites_used:5;
 	unsigned location_valid:2;
 	unsigned sbas:1;
+	unsigned gps_initialized:1;
+	unsigned gps_only:1;
 };
 
 struct location_s {

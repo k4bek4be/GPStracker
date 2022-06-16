@@ -137,6 +137,9 @@ static void gp_gga_parse(const char *str) {
 	const char *p;
 	double tmp;
 
+	p = gp_col(str, 7); /* satellites used */
+	System.satellites_used = atoi(p);
+
 	/* check validity */
 	p = gp_col(str, 6);
 	if (*p == '0') {
@@ -174,9 +177,6 @@ static void gp_gga_parse(const char *str) {
 		System.sbas = 1;
 	else
 		System.sbas = 0;
-
-	p = gp_col(str, 7); /* satellites used */
-	System.satellites_used = atoi(p);
 	
 	p = gp_col(str, 9); /* MSL altitude */
 	xatof(&p, &tmp);
@@ -184,15 +184,89 @@ static void gp_gga_parse(const char *str) {
 
 	location.time = utc; /* parsed from RMC */
 }
+/*$PMTK355*31<CR><LF>
+Return $PMTK001,355,3,1,0,0*2E “$PMTK001,355,3,GLON_Enable,BEIDOU_Enable,GALILEO_Enable”
+The GLONASS search mode is enabled. */
+static void pmtk001_parse(const char *str) {
+	const char *p;
+
+	/* check validity */
+	p = gp_col(str, 1);
+	if (strcmp_P(p, PSTR("355"))) /* not the PMTK355 reply */
+		return;
+	p = gp_col(str, 2);
+	if (*p == '0' || *p == '1') { /* invalid / unsupported */
+		System.gps_only = 1;
+		xputs_P(PSTR("GPS only\r\n"));
+	} else {
+		System.gps_only = 0;
+		xputs_P(PSTR("Multi GNSS\r\n"));
+	}
+
+	gps_initialize();
+}
 
 time_t gps_parse(const char *str) {	/* Get all required data from NMEA sentences */
-	if (!gp_comp(str, PSTR("$GPRMC")) || !gp_comp(str, PSTR("$GNRMC"))) {
+	if (!gp_comp(str, PSTR("$GPRMC")) || !gp_comp(str, PSTR("$GNRMC")) || !gp_comp(str, PSTR("$BDRMC")) || !gp_comp(str, PSTR("$GARMC"))) {
 		return gp_rmc_parse(str);
 	}
-	if (!gp_comp(str, PSTR("$GPGGA")) || !gp_comp(str, PSTR("$GNGGA"))) {
+	if (!gp_comp(str, PSTR("$GPGGA")) || !gp_comp(str, PSTR("$GNGGA")) || !gp_comp(str, PSTR("$BDGGA")) || !gp_comp(str, PSTR("$GAGGA"))) {
 		gp_gga_parse(str);
 		return 0;
 	}
+	if (!System.gps_initialized && !gp_comp(str, PSTR("$PMTK011"))) {
+		gps_initialize();
+		return 0;
+	}
+	if (!gp_comp(str, PSTR("$PMTK001"))) {
+		pmtk001_parse(str);
+		return 0;
+	}
 	return 0;
+}
+
+void uart0_put_wrap(int c) {
+	uart0_put((char)c);
+}
+
+void gps_initialize(void) {
+	/*
+	 * PMTK355: query gnss search mode (will fail if only GPS is supported)
+	 * PMTK353: set gnss search mode (GPS/Galileo/Glonass/Beidou)
+	 * PMTK313: enable SBAS
+	 */
+	if (!System.gps_initialized)
+		xfprintf(uart0_put_wrap, PSTR("$PMTK355*31\r\n"));
+	if (get_flag(CONFFLAG_ENABLE_SBAS))
+		xfprintf(uart0_put_wrap, PSTR("$PMTK313,1*2E\r\n"));
+	else
+		xfprintf(uart0_put_wrap, PSTR("$PMTK313,0*2F\r\n"));
+	if (!System.gps_only) {
+		switch (System.conf.gnss_mode) {
+			default:
+			case GNSS_MODE_GPS_GLONASS_GALILEO:
+				xfprintf(uart0_put_wrap, PSTR("$PMTK353,1,1,1,0,0*2A\r\n"));
+				break;
+			case GNSS_MODE_GPS:
+				xfprintf(uart0_put_wrap, PSTR("$PMTK353,1,0,0,0,0*2A\r\n"));
+				break;
+			case GNSS_MODE_GPS_GALILEO:
+				xfprintf(uart0_put_wrap, PSTR("$PMTK353,1,0,1,0,0*2B\r\n"));
+				break;
+			case GNSS_MODE_GALILEO:
+				xfprintf(uart0_put_wrap, PSTR("$PMTK353,0,0,1,0,0*2A\r\n"));
+				break;
+			case GNSS_MODE_GPS_BEIDOU:
+				xfprintf(uart0_put_wrap, PSTR("$PMTK353,1,0,0,0,1*2B\r\n"));
+				break;
+			case GNSS_MODE_BEIDOU:
+				xfprintf(uart0_put_wrap, PSTR("$PMTK353,0,0,0,0,1*2A\r\n"));
+				break;
+		}
+	} else {
+		System.conf.gnss_mode = GNSS_MODE_GPS;
+	}
+	xputs_P(PSTR("GPS init sent\r\n"));
+	System.gps_initialized = 1;
 }
 
