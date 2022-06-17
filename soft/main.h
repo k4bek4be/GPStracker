@@ -127,6 +127,7 @@ struct timers {
 	unsigned int system_log;
 	unsigned int lcd;
 	unsigned int backlight;
+	unsigned int info_display;
 };
 
 struct system_s {
@@ -145,6 +146,7 @@ struct system_s {
 	unsigned sbas:1;
 	unsigned gps_initialized:1;
 	unsigned gps_only:1;
+	unsigned tracking_paused:1;
 };
 
 struct location_s {

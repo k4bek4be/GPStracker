@@ -33,55 +33,62 @@ struct kalman_s {
 #define AVG_COUNT	3
 #define MIN_DIST_DELTA	2.0
 
-struct {
+struct prev_points_s {
 	struct location_s data[PREV_POINTS_LENGTH];
 	unsigned char start;
 	unsigned char count;
-} prev_points;
-struct location_s last_saved;
+};
 
-static struct kalman_s kalman[2];
-static struct {
+struct avg_store_s {
 	float lat;
 	float lon;
 	time_t time;
-} avg_store;
-static unsigned char avg_count;
+};
 
+static struct {
+	struct prev_points_s prev_points;
+	unsigned char avg_count;
+	unsigned char paused;
+	struct avg_store_s avg_store;
+	struct location_s last_saved;
+	struct kalman_s kalman[2];
+} gpx;
 
 float kalman_predict(struct kalman_s *k, float data);
 void kalman_init(struct kalman_s *k);
 float distance(struct location_s *pos1, struct location_s *pos2);
 
 void prev_points_append(struct location_s *new){
-	prev_points.data[(prev_points.start + prev_points.count)%PREV_POINTS_LENGTH] = *new;
-	if(++prev_points.count > PREV_POINTS_LENGTH){
-		prev_points.count--;
-		prev_points.start++;
-		prev_points.start %= PREV_POINTS_LENGTH;
+	gpx.prev_points.data[(gpx.prev_points.start + gpx.prev_points.count)%PREV_POINTS_LENGTH] = *new;
+	if(++gpx.prev_points.count > PREV_POINTS_LENGTH){
+		gpx.prev_points.count--;
+		gpx.prev_points.start++;
+		gpx.prev_points.start %= PREV_POINTS_LENGTH;
 	}
 }
 
 struct location_s *prev_points_get(unsigned char index){
-	unsigned char i, addr = prev_points.start;
+	unsigned char i, addr = gpx.prev_points.start;
 	for(i=0; i<index; i++){
 		addr++;
 		addr %= PREV_POINTS_LENGTH;
 	}
-	return &prev_points.data[addr];
+	return &gpx.prev_points.data[addr];
 }
 
 
 unsigned char gpx_init(FIL *file) {
 	unsigned int bw;
 	
-	kalman_init(&kalman[0]);
-	kalman_init(&kalman[1]);
-	prev_points.count = 0;
-	avg_count = 0;	
-	last_saved.lon = 0;
-	last_saved.lat = 0;
-	last_saved.time = 0;
+	kalman_init(&gpx.kalman[0]);
+	kalman_init(&gpx.kalman[1]);
+	gpx.prev_points.count = 0;
+	gpx.avg_count = 0;
+	gpx.last_saved.lon = 0;
+	gpx.last_saved.lat = 0;
+	gpx.last_saved.time = 0;
+
+	gpx.paused = 0;
 
 	strcpy_P(buf, xml_header);
 	return f_write(file, buf, strlen(buf), &bw);
@@ -90,17 +97,34 @@ unsigned char gpx_init(FIL *file) {
 unsigned char gpx_write(struct location_s *loc, FIL *file) {
 	unsigned int bw;
 	const char *time;
-	
-	time = get_iso_time(loc->time, 0);
-	xsprintf(buf, PSTR("\t\t\t<trkpt lat=\"%.8f\" lon=\"%.8f\">\n\t\t\t\t<time>%s</time>\n"), loc->lat, loc->lon, time);
-	/* alt */
-	strcat_P(buf, PSTR("\t\t\t</trkpt>\n"));
+
+	if (System.tracking_paused) {
+		if (!gpx.paused) {
+			strcpy_P(buf, PSTR("\t\t</trkseg>\n"));
+			gpx.paused = 1;
+		} else {
+			return 0; /* nothing to store */
+		}
+	} else {
+		if (gpx.paused) {
+			strcpy_P(buf, PSTR("\t\t<trkseg>\n"));
+			f_write(file, buf, strlen(buf), &bw);
+			gpx.paused = 0;
+		}
+		time = get_iso_time(loc->time, 0);
+		xsprintf(buf, PSTR("\t\t\t<trkpt lat=\"%.8f\" lon=\"%.8f\">\n\t\t\t\t<time>%s</time>\n"), loc->lat, loc->lon, time);
+		/* alt */
+		strcat_P(buf, PSTR("\t\t\t</trkpt>\n"));
+	}
 	return f_write(file, buf, strlen(buf), &bw);
 }
 
 unsigned char gpx_close(FIL *file) {
 	unsigned int bw;
-	strcpy_P(buf, PSTR("\t\t</trkseg>\n\t</trk>\n</gpx>\n"));
+	buf[0] = '\0';
+	if (!gpx.paused)
+		strcpy_P(buf, PSTR("\t\t</trkseg>\n"));
+	strcat_P(buf, PSTR("\t</trk>\n</gpx>\n"));
 	f_write(file, buf, strlen(buf), &bw);
 	return f_close(file);
 }
@@ -114,8 +138,8 @@ void gpx_process_point(struct location_s *loc, FIL *file){
 		xputs_P(PSTR("Write with filters disabled\r\n"));
 		gpx_write(loc, file);
 	} else {
-		lat_est = kalman_predict(&kalman[0], loc->lat);
-		lon_est = kalman_predict(&kalman[1], loc->lon);
+		lat_est = kalman_predict(&gpx.kalman[0], loc->lat);
+		lon_est = kalman_predict(&gpx.kalman[1], loc->lon);
 		
 		lat_err = fabs(loc->lat - lat_est);
 		lon_err = fabs(loc->lon - lon_est);
@@ -128,7 +152,7 @@ void gpx_process_point(struct location_s *loc, FIL *file){
 		loc->lon = lon_est;
 		
 		prev_points_append(loc);
-		if(prev_points.count == PREV_POINTS_LENGTH){
+		if(gpx.prev_points.count == PREV_POINTS_LENGTH){
 			float dist12 = distance(prev_points_get(0), prev_points_get(1));
 			float dist34 = distance(prev_points_get(2), prev_points_get(3));
 			float dist32 = distance(prev_points_get(2), prev_points_get(1));
@@ -139,35 +163,35 @@ void gpx_process_point(struct location_s *loc, FIL *file){
 			}
 			ptr = prev_points_get(PREV_POINTS_LENGTH - 2);
 		} else {
-			if(prev_points.count >= PREV_POINTS_LENGTH-2){
-				ptr = prev_points_get(prev_points.count - 2);
+			if(gpx.prev_points.count >= PREV_POINTS_LENGTH-2){
+				ptr = prev_points_get(gpx.prev_points.count - 2);
 				xputs_P(PSTR("NEW\r\n"));
 			} else {
 				return;
 			}
 		}
 
-		if(distance(&last_saved, ptr) < MIN_DIST_DELTA){
+		if(distance(&gpx.last_saved, ptr) < MIN_DIST_DELTA){
 			xputs_P(PSTR("Too small position change REJECT\r\n"));
 			return;
 		}
 
 		xputs_P(PSTR("ACCEPT\r\n"));
 
-		avg_store.lat += ptr->lat;
-		avg_store.lon += ptr->lon;
-		if(avg_count == AVG_COUNT/2)
-			avg_store.time = ptr->time;
+		gpx.avg_store.lat += ptr->lat;
+		gpx.avg_store.lon += ptr->lon;
+		if(gpx.avg_count == AVG_COUNT/2)
+			gpx.avg_store.time = ptr->time;
 		
-		if(++avg_count == AVG_COUNT){
-			nloc.lat = avg_store.lat / AVG_COUNT;
-			nloc.lon = avg_store.lon / AVG_COUNT;
-			nloc.time = avg_store.time;
-			avg_count = 0;
-			avg_store.lat = 0;
-			avg_store.lon = 0;
-			avg_store.time = 0;
-			last_saved = nloc;
+		if(++gpx.avg_count == AVG_COUNT){
+			nloc.lat = gpx.avg_store.lat / AVG_COUNT;
+			nloc.lon = gpx.avg_store.lon / AVG_COUNT;
+			nloc.time = gpx.avg_store.time;
+			gpx.avg_count = 0;
+			gpx.avg_store.lat = 0;
+			gpx.avg_store.lon = 0;
+			gpx.avg_store.time = 0;
+			gpx.last_saved = nloc;
 			gpx_write(&nloc, file);
 			return;
 		}

@@ -127,6 +127,7 @@ __flash const char _gps_wait[] =		"Czekam na GPS...";
 __flash const char _gps_ok[] =			"GPS OK!";
 __flash const char _card_ok[] =			"Karta OK!";
 __flash const char _logging_active[] =	"Zapis aktywny";
+__flash const char _logging_paused[] =	"Zapis wstrzymany";
 
 void disp_func_card_ok(__attribute__ ((unused)) unsigned char changed) {
 	strcpy_P(disp.line1, _card_ok);
@@ -142,9 +143,12 @@ void disp_func_file_closed(__attribute__ ((unused)) unsigned char changed) {
 }
 
 void disp_func_main_default(__attribute__ ((unused)) unsigned char changed) {
-	if (FLAGS & F_FILEOPEN)
-		strcpy_P(disp.line1, _logging_active);
-	else
+	if (FLAGS & F_FILEOPEN) {
+		if (System.tracking_paused)
+			strcpy_P(disp.line1, _logging_paused);
+		else
+			strcpy_P(disp.line1, _logging_active);
+	} else
 		strcpy_P(disp.line1, _card_ok);
 
 	if (FLAGS & F_GPSOK)
@@ -175,8 +179,7 @@ void disp_func_ele_sat(__attribute__ ((unused)) unsigned char changed) {
 }
 
 void disp_func_main_menu(__attribute__ ((unused)) unsigned char changed) {
-	strcpy_P(disp.line1, PSTR("  *** MENU *** "));
-	strcpy_P(disp.line2, PSTR("> Ustawienia"));
+	display_main_menu_item();
 }
 
 void disp_func_settings_menu(__attribute__ ((unused)) unsigned char changed) {
