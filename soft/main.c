@@ -414,14 +414,7 @@ int main (void)
 
 			if (localtime && !(FLAGS & F_FILEOPEN)) {
 				char *time = get_iso_time(utc, 1);
-				char *ptr = time;
-				while (*ptr) {
-					switch (*ptr) {
-						case ':': *ptr = '-'; break;
-						case '+': *ptr = 'p'; break;
-					}
-					ptr++;
-				}
+				iso_time_to_filename(time);
 				xsprintf(Line, PSTR("%s-NMEA.LOG"), time);
 				xprintf(__open_msg, Line);
 				if (f_open(&gps_log, Line, FA_WRITE | FA_OPEN_ALWAYS)		/* Open log file */

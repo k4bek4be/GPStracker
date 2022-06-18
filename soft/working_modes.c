@@ -5,6 +5,7 @@
 #include "xprintf.h"
 #include "settings.h"
 #include "nmea.h"
+#include "gpx.h"
 
 static signed char display_mode_index;
 
@@ -26,11 +27,6 @@ unsigned char tracking_pause(void) {
 		LEDB_OFF();
 	return MODE_NO_CHANGE;
 }
-
-#define STATE_PAUSE_TRACKING_NOTPAUSED	0
-#define STATE_PAUSE_TRACKING_JUSTPAUSED	1
-#define STATE_PAUSE_TRACKING_PAUSED		2
-#define STATE_PAUSE_TRACKING_JUSTUNPAUSED	3
 
 const char *pause_tracking_get_name(void) {
 	static unsigned char state = STATE_PAUSE_TRACKING_NOTPAUSED;
@@ -67,7 +63,39 @@ const char *pause_tracking_get_name(void) {
 	}
 }
 
+const char *save_point_get_name(void) {
+	switch (mp.point_save_state) {
+		default:
+			return PSTR("Zapisz punkt");
+		case STATE_POINT_SAVE_NOT_DONE:
+			if (timer_expired(info_display))
+				mp.point_save_state = STATE_POINT_SAVE_READY;
+			return PSTR("Nie zapisano!");
+		case STATE_POINT_SAVE_DONE:
+			if (timer_expired(info_display))
+				mp.point_save_state = STATE_POINT_SAVE_READY;
+			return PSTR("Zapisano!");
+	}
+}
+
+unsigned char save_point(void) {
+	if (timer_expired(info_display)) { /* don't save too often */
+		if (System.location_valid) {
+			gpx_save_single_point(&location);
+			mp.point_save_state = STATE_POINT_SAVE_DONE;
+		} else {
+			mp.point_save_state = STATE_POINT_SAVE_NOT_DONE;
+		}
+	}
+	set_timer(info_display, 2000);
+	return MODE_NO_CHANGE;
+}
+
 __flash const struct main_menu_pos_s main_menu[MAIN_MENU_MAXPOS+1] = {
+	{
+		.func = save_point,
+		.get_name = save_point_get_name,
+	},
 	{
 		.func = enter_settings,
 		.get_name = enter_settings_get_name,

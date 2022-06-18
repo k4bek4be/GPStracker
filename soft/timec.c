@@ -116,3 +116,12 @@ DWORD get_fattime (void)
            (DWORD)stm->tm_sec >> 1;
 }
 
+void iso_time_to_filename(char *time) {
+	while (*time) {
+		switch (*time) {
+			case ':': *time = '-'; break;
+			case '+': *time = 'p'; break;
+		}
+		time++;
+	}
+}

@@ -6,18 +6,20 @@
 #include "gpx.h"
 #include "ff.h"
 #include "settings.h"
+#include "timec.h"
 
 #define KALMAN_Q	8.5e-6
 #define KALMAN_R	4e-5
 #define KALMAN_ERR_MAX	6e-4
 
 __flash const char xml_header[] = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-		"<gpx xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://www.topografix.com/GPX/1/1\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\" version=\"1.1\" creator=\"k4be\">\n"
-		"\t<trk>\n"
-		"\t\t<trkseg>\n";
+		"<gpx xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://www.topografix.com/GPX/1/1\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\" version=\"1.1\" creator=\"k4be\">\n";
+__flash const char xml_trk_start[] = "\t<trk>\n";
+__flash const char xml_trkseg_end[] = "\t\t</trkseg>\n";
+__flash const char xml_trkseg_start[] = "\t\t<trkseg>\n";
 
 FIL gpx_file;
-static char buf[sizeof(xml_header)+1];
+static char buf[sizeof(xml_header)+sizeof(xml_trk_start)+2];
 
 struct kalman_s {
 	unsigned char initialized;
@@ -88,10 +90,35 @@ unsigned char gpx_init(FIL *file) {
 	gpx.last_saved.lat = 0;
 	gpx.last_saved.time = 0;
 
-	gpx.paused = 0;
+	gpx.paused = 1; /* make it add a <trkseg> tag */
 
 	strcpy_P(buf, xml_header);
+	strcat_P(buf, xml_trk_start);
 	return f_write(file, buf, strlen(buf), &bw);
+}
+
+void gpx_save_single_point(struct location_s *loc) {
+	FIL gpx;
+	UINT bw;
+	unsigned char err = 0;
+	char *time = get_iso_time(loc->time, 1);
+	iso_time_to_filename(time);
+	xsprintf(buf, PSTR("%s-POINT.GPX"), time);
+	xprintf(PSTR("Writing single point in %s\r\n"), buf);
+	if ((err = f_open(&gpx, buf, FA_WRITE | FA_OPEN_ALWAYS))) {
+		f_close(&gpx);
+//		System.status = STATUS_FILE_OPEN_ERROR;
+		xputs_P(PSTR("File open error\r\n"));
+		return;	/* Failed to open file */
+	}
+	strcpy_P(buf, xml_header);
+	err |= f_write(&gpx, buf, strlen(buf), &bw);
+	xsprintf(buf, PSTR("\t<wpt lat=\"%.8f\" lon=\"%.8f\"></wpt>\n</gpx>\n"), loc->lat, loc->lon);
+	err |= f_write(&gpx, buf, strlen(buf), &bw);
+	err |= f_close(&gpx);
+	if (err) {
+		/* TODO */
+	}
 }
 
 unsigned char gpx_write(struct location_s *loc, FIL *file) {
@@ -100,22 +127,22 @@ unsigned char gpx_write(struct location_s *loc, FIL *file) {
 
 	if (System.tracking_paused) {
 		if (!gpx.paused) {
-			strcpy_P(buf, PSTR("\t\t</trkseg>\n"));
+			strcpy_P(buf, xml_trkseg_end);
 			gpx.paused = 1;
-		} else {
-			return 0; /* nothing to store */
 		}
-	} else {
-		if (gpx.paused) {
-			strcpy_P(buf, PSTR("\t\t<trkseg>\n"));
-			f_write(file, buf, strlen(buf), &bw);
-			gpx.paused = 0;
-		}
-		time = get_iso_time(loc->time, 0);
-		xsprintf(buf, PSTR("\t\t\t<trkpt lat=\"%.8f\" lon=\"%.8f\">\n\t\t\t\t<time>%s</time>\n"), loc->lat, loc->lon, time);
-		/* alt */
-		strcat_P(buf, PSTR("\t\t\t</trkpt>\n"));
+		return 0; /* nothing to store */
 	}
+
+	if (gpx.paused) {
+		strcpy_P(buf, xml_trkseg_start);
+		f_write(file, buf, strlen(buf), &bw);
+		gpx.paused = 0;
+	}
+	time = get_iso_time(loc->time, 0);
+	xsprintf(buf, PSTR("\t\t\t<trkpt lat=\"%.8f\" lon=\"%.8f\">\n\t\t\t\t<time>%s</time>\n"), loc->lat, loc->lon, time);
+	/* alt */
+	strcat_P(buf, PSTR("\t\t\t</trkpt>\n"));
+
 	return f_write(file, buf, strlen(buf), &bw);
 }
 
@@ -123,7 +150,7 @@ unsigned char gpx_close(FIL *file) {
 	unsigned int bw;
 	buf[0] = '\0';
 	if (!gpx.paused)
-		strcpy_P(buf, PSTR("\t\t</trkseg>\n"));
+		strcpy_P(buf, xml_trkseg_end);
 	strcat_P(buf, PSTR("\t</trk>\n</gpx>\n"));
 	f_write(file, buf, strlen(buf), &bw);
 	return f_close(file);
