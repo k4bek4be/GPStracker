@@ -11,6 +11,7 @@ EEMEM unsigned char config_crc;
 
 const __flash unsigned char limits_max_u8[] = {
 	[CONF_U8_GNSS_MODE] = 5,
+	[CONF_U8_SKIP_POINTS] = 120,
 };
 
 unsigned char settings_load(void) { /* 0 - ok, 1 - error */
@@ -123,6 +124,12 @@ void settings_bool_disp_default(unsigned char val) {
 	strcat_P(disp.line2, HAVE_PREV_SETTING_POSITION?PSTR(" \x02"):PSTR("  ")); /* up arrow */
 }
 
+void settings_u8_disp_default(unsigned char val) {
+	xsprintf(disp.line2, PSTR("%d"), (int)val);
+	strcat_P(disp.line2, HAVE_NEXT_SETTING_POSITION?PSTR(" \x01"):PSTR("  ")); /* down arrow */
+	strcat_P(disp.line2, HAVE_PREV_SETTING_POSITION?PSTR(" \x02"):PSTR("  ")); /* up arrow */
+}
+
 void display_gnss_mode(unsigned char val) {
 	strcpy_P(disp.line2, gnss_names[val]);
 }
@@ -132,6 +139,7 @@ void display_gnss_mode(unsigned char val) {
 __flash const char _msg_disable_filters[] = "Nie filtruj";
 __flash const char _msg_enable_sbas[] = "Szukaj SBAS";
 __flash const char _msg_gnss_type[] = "Rodzaj GNSS";
+__flash const char _msg_skip_points[] = "Pomin punkty";
 __flash const char _msg_back[] = "< Powrot";
 
 __flash const struct settings_menu_pos_s settings_menu[SETTINGS_MENU_MAXPOS+1] = {
@@ -144,6 +152,12 @@ __flash const struct settings_menu_pos_s settings_menu[SETTINGS_MENU_MAXPOS+1] =
 		.name = _msg_disable_filters,
 		.index = CONFFLAG_DISABLE_FILTERS,
 		.display = settings_bool_disp_default,
+	},
+	{
+		.type = SETTINGS_TYPE_U8,
+		.name = _msg_skip_points,
+		.index = CONF_U8_SKIP_POINTS,
+		.display = settings_u8_disp_default,
 	},
 	{
 		.type = SETTINGS_TYPE_BOOL,

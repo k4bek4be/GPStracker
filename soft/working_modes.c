@@ -13,6 +13,8 @@ __flash const unsigned char main_display_modes[] = {
 	DISPLAY_STATE_MAIN_DEFAULT,
 	DISPLAY_STATE_COORD,
 	DISPLAY_STATE_ELE_SAT,
+	DISPLAY_STATE_DIST_TIME,
+	DISPLAY_STATE_SPEED,
 };
 
 const char *enter_settings_get_name(void) {

@@ -178,6 +178,24 @@ void disp_func_ele_sat(__attribute__ ((unused)) unsigned char changed) {
 		strcat_P(disp.line2, PSTR(", DGPS"));
 }
 
+void disp_distance_and_time(__attribute__ ((unused)) unsigned char changed) {
+	xsprintf(disp.line1, PSTR("%.2f km"), (float)System.distance / 100000.0);
+	if (utc > 0 && System.time_start > 0) {
+		xsprintf(disp.line2, PSTR("t=%u s"), (unsigned int)(utc - System.time_start));
+	} else {
+		strcpy_P(disp.line2, PSTR("Czas nieznany"));
+	}
+}
+
+void disp_speed(__attribute__ ((unused)) unsigned char changed) {
+	strcpy_P(disp.line1, PSTR("Predkosc:"));
+	if (utc > 0 && System.time_start > 0) {
+		xsprintf(disp.line2, PSTR("%.2f km/h"), (float)System.distance / (float)(utc - System.time_start) * 0.036);
+	} else {
+		strcpy_P(disp.line2, PSTR("nieznana"));
+	}
+}
+
 void disp_func_main_menu(__attribute__ ((unused)) unsigned char changed) {
 	display_main_menu_item();
 }
@@ -197,6 +215,8 @@ void (*__flash const disp_funcs[])(unsigned char) = {
 	[DISPLAY_STATE_MAIN_DEFAULT] = disp_func_main_default,
 	[DISPLAY_STATE_COORD] = disp_func_coord,
 	[DISPLAY_STATE_ELE_SAT] = disp_func_ele_sat,
+	[DISPLAY_STATE_DIST_TIME] = disp_distance_and_time,
+	[DISPLAY_STATE_SPEED] = disp_speed,
 	[DISPLAY_STATE_MAIN_MENU] = disp_func_main_menu,
 	[DISPLAY_STATE_SETTINGS_MENU] = disp_func_settings_menu,
 };

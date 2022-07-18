@@ -4,8 +4,9 @@
 
 /* u8 list - max 15 */
 #define CONF_U8_GNSS_MODE	0
+#define CONF_U8_SKIP_POINTS	1
 
-#define CONF_U8_LAST		0
+#define CONF_U8_LAST		1
 
 /* flags list - max 31 */
 #define CONFFLAG_DISABLE_FILTERS	0
@@ -28,13 +29,14 @@
 #define HAVE_NEXT_SETTING_POSITION (mp.settings_menu_pos < SETTINGS_MENU_MAXPOS)
 #define HAVE_PREV_SETTING_POSITION (mp.settings_menu_pos > 0)
 
-#define SETTINGS_MENU_MAXPOS	3
+#define SETTINGS_MENU_MAXPOS	4
 
 struct config_s {
 	union {
 		unsigned char conf_u8[16];
 		struct {
 			unsigned char gnss_mode; // 0
+			unsigned char skip_points; // 1
 		};
 	};
 	unsigned char flags[4];

@@ -51,6 +51,7 @@ static struct {
 	struct prev_points_s prev_points;
 	unsigned char avg_count;
 	unsigned char paused;
+	unsigned char point_count;
 	struct avg_store_s avg_store;
 	struct location_s last_saved;
 	struct kalman_s kalman[2];
@@ -129,6 +130,7 @@ unsigned char gpx_write(struct location_s *loc, FIL *file) {
 		if (!gpx.paused) {
 			strcpy_P(buf, xml_trkseg_end);
 			gpx.paused = 1;
+			gpx.point_count = 0;
 		} else {
 			return 0; /* nothing to store */
 		}
@@ -161,6 +163,11 @@ void gpx_process_point(struct location_s *loc, FIL *file){
 	float lon_est, lon_err, lat_est, lat_err, dist = NAN;
 	struct location_s *ptr;
 	struct location_s nloc;
+
+	if (gpx.point_count < System.conf.skip_points) { /* Skipping initial points */
+		gpx.point_count++;
+		return;
+	}
 	
 	if (get_flag(CONFFLAG_DISABLE_FILTERS)) {
 		xputs_P(PSTR("Write with filters disabled\r\n"));
@@ -228,8 +235,11 @@ void gpx_process_point(struct location_s *loc, FIL *file){
 			gpx_write(&nloc, file);
 		}
 	}
+	if (System.time_start == 0)
+		System.time_start = utc;
 	if (isnan(dist))
 		return;
+	/* FIXME distance is always calculated from unfiltered data and never paused! */
 	add_distance(dist);
 }
 

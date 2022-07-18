@@ -141,6 +141,7 @@ struct system_s {
 	unsigned char keypress;
 	unsigned char working_mode;
 	unsigned long int distance; // cm
+	time_t time_start;
 	unsigned temperature_ok:1;
 	unsigned satellites_used:5;
 	unsigned location_valid:2;
