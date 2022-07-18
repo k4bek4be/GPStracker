@@ -129,19 +129,20 @@ unsigned char gpx_write(struct location_s *loc, FIL *file) {
 		if (!gpx.paused) {
 			strcpy_P(buf, xml_trkseg_end);
 			gpx.paused = 1;
+		} else {
+			return 0; /* nothing to store */
 		}
-		return 0; /* nothing to store */
+	} else {
+		if (gpx.paused) {
+			strcpy_P(buf, xml_trkseg_start);
+			f_write(file, buf, strlen(buf), &bw);
+			gpx.paused = 0;
+		}
+		time = get_iso_time(loc->time, 0);
+		xsprintf(buf, PSTR("\t\t\t<trkpt lat=\"%.8f\" lon=\"%.8f\">\n\t\t\t\t<time>%s</time>\n"), loc->lat, loc->lon, time);
+		/* alt */
+		strcat_P(buf, PSTR("\t\t\t</trkpt>\n"));
 	}
-
-	if (gpx.paused) {
-		strcpy_P(buf, xml_trkseg_start);
-		f_write(file, buf, strlen(buf), &bw);
-		gpx.paused = 0;
-	}
-	time = get_iso_time(loc->time, 0);
-	xsprintf(buf, PSTR("\t\t\t<trkpt lat=\"%.8f\" lon=\"%.8f\">\n\t\t\t\t<time>%s</time>\n"), loc->lat, loc->lon, time);
-	/* alt */
-	strcat_P(buf, PSTR("\t\t\t</trkpt>\n"));
 
 	return f_write(file, buf, strlen(buf), &bw);
 }
@@ -157,12 +158,16 @@ unsigned char gpx_close(FIL *file) {
 }
 
 void gpx_process_point(struct location_s *loc, FIL *file){
-	float lon_est, lon_err, lat_est, lat_err;
+	float lon_est, lon_err, lat_est, lat_err, dist = NAN;
 	struct location_s *ptr;
 	struct location_s nloc;
 	
 	if (get_flag(CONFFLAG_DISABLE_FILTERS)) {
 		xputs_P(PSTR("Write with filters disabled\r\n"));
+		prev_points_append(loc);
+		if(gpx.prev_points.count == PREV_POINTS_LENGTH){
+			dist = distance(prev_points_get(2), prev_points_get(3));
+		}
 		gpx_write(loc, file);
 	} else {
 		lat_est = kalman_predict(&gpx.kalman[0], loc->lat);
@@ -189,6 +194,7 @@ void gpx_process_point(struct location_s *loc, FIL *file){
 				return;
 			}
 			ptr = prev_points_get(PREV_POINTS_LENGTH - 2);
+			dist = dist34;
 		} else {
 			if(gpx.prev_points.count >= PREV_POINTS_LENGTH-2){
 				ptr = prev_points_get(gpx.prev_points.count - 2);
@@ -220,9 +226,11 @@ void gpx_process_point(struct location_s *loc, FIL *file){
 			gpx.avg_store.time = 0;
 			gpx.last_saved = nloc;
 			gpx_write(&nloc, file);
-			return;
 		}
 	}
+	if (isnan(dist))
+		return;
+	add_distance(dist);
 }
 
 void kalman_init(struct kalman_s *k){
@@ -253,10 +261,23 @@ float kalman_predict(struct kalman_s *k, float data){
 	return x_est;
 }
 
+#define R_EARTH	6371e3 // m
+
 float distance(struct location_s *pos1, struct location_s *pos2){
-	float lon_delta = fabs(pos1->lon - pos2->lon) * 111139.0;
-	float lat_delta = fabs(pos1->lat - pos2->lat) * 111139.0;
-//	xprintf(PSTR("lat1=%f; lat2=%f; lon1=%f; lon2=%f; lat_delta=%f; lon_delta=%f\r\n"), pos1->lat, pos2->lat, pos1->lon, pos2->lon, lon_delta, lat_delta);
-	return sqrtf(lon_delta * lon_delta + lat_delta * lat_delta);
+	float lat1 = pos1->lat * M_PI / 180.0;
+	float lat2 = pos2->lat * M_PI / 180.0;
+	float dlat = (pos2->lat - pos1->lat) * M_PI / 180.0;
+	float dlon = (pos2->lon - pos1->lon) * M_PI / 180.0;
+	float a = sinf(dlat/2.0) * sinf(dlat/2.0) + cosf(lat1) * cosf(lat2) * sinf(dlon/2.0) * sinf(dlon/2.0);
+	float c = 2 * atan2f(sqrtf(a), sqrtf(1-a));
+	float ret = R_EARTH * c;
+	System.distance += (ret+0.005)*100.0;
+	xprintf(PSTR("Distance: %f m; sum: %f m\r\n"), ret, System.distance/100.0);
+	return ret;
+}
+
+void add_distance(float dist) {
+	System.distance += (dist+0.005)*100.0;
+	xprintf(PSTR("Distance: %f m; sum: %f m\r\n"), dist, System.distance/100.0);
 }
 
