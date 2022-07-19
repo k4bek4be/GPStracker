@@ -197,7 +197,7 @@ struct {
 	unsigned int len;
 } logbuf;
 
-void log_put(char c){
+void log_put(int c){
 	UINT bw;
 	uart1_put(c);
 	logbuf.buf[logbuf.len++] = c;
