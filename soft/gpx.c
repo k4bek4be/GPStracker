@@ -281,8 +281,6 @@ float distance(struct location_s *pos1, struct location_s *pos2){
 	float a = sinf(dlat/2.0) * sinf(dlat/2.0) + cosf(lat1) * cosf(lat2) * sinf(dlon/2.0) * sinf(dlon/2.0);
 	float c = 2 * atan2f(sqrtf(a), sqrtf(1-a));
 	float ret = R_EARTH * c;
-	System.distance += (ret+0.005)*100.0;
-	xprintf(PSTR("Distance: %f m; sum: %f m\r\n"), ret, System.distance/100.0);
 	return ret;
 }
 
