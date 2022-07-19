@@ -417,6 +417,7 @@ int main (void)
 				iso_time_to_filename(time);
 				xsprintf(Line, PSTR("%s-NMEA.LOG"), time);
 				xprintf(__open_msg, Line);
+				wdt_disable();
 				if (f_open(&gps_log, Line, FA_WRITE | FA_OPEN_ALWAYS)		/* Open log file */
 					|| f_lseek(&gps_log, f_size(&gps_log)) 					/* Append mode */
 					|| f_write(&gps_log, "\r\n", 2, &bw))					/* Put a blank line as start marker */
@@ -424,7 +425,6 @@ int main (void)
 					System.status = STATUS_FILE_OPEN_ERROR;
 					break;	/* Failed to start logging */
 				}
-				wdt_reset();
 
 				xsprintf(Line, PSTR("%s.GPX"), time);
 				xprintf(__open_msg, Line);
@@ -436,7 +436,6 @@ int main (void)
 					System.status = STATUS_FILE_OPEN_ERROR;
 					break;	/* Failed to start logging */
 				}
-				wdt_reset();
 
 				xsprintf(Line, PSTR("%s-SYSTEM.LOG"), time);
 				xprintf(__open_msg, Line);
@@ -449,8 +448,7 @@ int main (void)
 					System.status = STATUS_FILE_OPEN_ERROR;
 					break;	/* Failed to start logging */
 				}
-				wdt_reset();
-
+				wdt_enable(WDTO_4S);
 				FLAGS |= F_FILEOPEN;
 				System.status = STATUS_OK;
 				beep(50, 2);		/* Two beeps. Start logging. */
@@ -458,6 +456,8 @@ int main (void)
 				continue;
 			}
 		}
+		
+		wdt_enable(WDTO_4S);
 
 		/* Stop GPS receiver */
 		uart0_deinit();
