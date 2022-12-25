@@ -4,6 +4,7 @@
 #include "HD44780-I2C.h"
 #include "xprintf.h"
 #include "working_modes.h"
+#include "timec.h"
 
 __flash const unsigned char battery_states[][8] = {
 	{
@@ -196,6 +197,20 @@ void disp_speed(__attribute__ ((unused)) unsigned char changed) {
 	}
 }
 
+void disp_time(__attribute__ ((unused)) unsigned char changed) {
+	if (utc == 0) {
+		strcpy_P(disp.line1, PSTR("?"));
+		strcpy_P(disp.line2, PSTR("?"));
+		return;
+	}
+	time_t time = utc;
+	time += local_time_diff(time) * (signed int)3600;
+	struct tm *ct = gmtime(&time);
+
+	xsprintf(disp.line1, PSTR("%d.%02d.%4d"), ct->tm_mday, ct->tm_mon+1, ct->tm_year+1900);
+	xsprintf(disp.line2, PSTR("%d:%02d:%02d"), ct->tm_hour, ct->tm_min, ct->tm_sec);
+}
+
 void disp_func_main_menu(__attribute__ ((unused)) unsigned char changed) {
 	display_main_menu_item();
 }
@@ -217,6 +232,7 @@ void (*__flash const disp_funcs[])(unsigned char) = {
 	[DISPLAY_STATE_ELE_SAT] = disp_func_ele_sat,
 	[DISPLAY_STATE_DIST_TIME] = disp_distance_and_time,
 	[DISPLAY_STATE_SPEED] = disp_speed,
+	[DISPLAY_STATE_TIME] = disp_time,
 	[DISPLAY_STATE_MAIN_MENU] = disp_func_main_menu,
 	[DISPLAY_STATE_SETTINGS_MENU] = disp_func_settings_menu,
 };
