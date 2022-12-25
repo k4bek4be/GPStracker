@@ -34,16 +34,19 @@ UINT get_line (		/* 0:Brownout or timeout, >0: Number of bytes received. */
 			continue;
 		}
 		c = (char)uart0_get();
-		uart1_put(c);
-		if (i == 0 && c != '$')
+		if (i == 0 && c != '$' )
 			continue;	/* Find start of line */
-		buff[i++] = c;
-		if (c == '\n')
+		if (c == '\n' || c == '\r') {
+			buff[i++] = '\0'; /* add null termination for string */
 			break;	/* EOL */
+		}
+		buff[i++] = c;
+		uart1_put(c);
 		if (i >= sz_buf)
 			i = 0;	/* Buffer overflow (abort this line) */
 	}
-
+	uart1_put('\r');
+	uart1_put('\n');
 	return i;
 }
 
@@ -206,19 +209,66 @@ static void pmtk001_parse(const char *str) {
 	gps_initialize();
 }
 
-time_t gps_parse(const char *str) {	/* Get all required data from NMEA sentences */
-	if (!gp_comp(str, PSTR("$GPRMC")) || !gp_comp(str, PSTR("$GNRMC")) || !gp_comp(str, PSTR("$BDRMC")) || !gp_comp(str, PSTR("$GARMC"))) {
+unsigned char nmea_checksum(const char *str) {
+	unsigned char cs = 0;
+	while (*str) {
+		cs ^= *str++; /* NMEA checksum is quite primitive, but still should catch simple bitstream errors or truncated lines */
+	}
+	return cs;
+}
+
+time_t gps_parse(char *str) {	/* Get all required data from NMEA sentences */
+	unsigned int len = strlen(str);
+	const char *checksum;
+	unsigned char calc_checksum, inc_checksum;
+	unsigned int i;
+	char c;
+
+	if (len < 4)
+		return 0; /* each message must contain $.*xx where . is one or more actual data characters and xx is the checksum */
+
+	for (i = len-1; i && i >= (len-2); i--) { /* find checksum */
+		if (str[i] == '*')
+			break;
+	}
+	checksum = str+i+1; /* skip * character */
+	inc_checksum = 0; /* parse hex string */
+	while (*checksum) {
+		inc_checksum *= 16;
+		c = *checksum++;
+		if (c >= '0' && c <= '9') {
+			inc_checksum += c - '0';
+		} else if (c >= 'a' && c <= 'f') {
+			inc_checksum += c - 'a' + 10;
+		} else if (c >= 'A' && c <= 'F') {
+			inc_checksum += c - 'A' + 10;
+		} else {
+			xputs_P(PSTR("Invalid NMEA: malformed checksum\r\n"));
+			return 0; /* invalid checksum character */
+		}
+	}
+	
+	str[i] = '\0'; /* drop checksum (*xx) and initial $ */
+	str++;
+
+	calc_checksum = nmea_checksum(str);
+	if (inc_checksum != calc_checksum) {
+		xputs_P(PSTR("Invalid NMEA checksum received\r\n"));
+		return 0;
+	}
+	
+	if (!gp_comp(str, PSTR("GPRMC")) || !gp_comp(str, PSTR("GNRMC")) || !gp_comp(str, PSTR("BDRMC")) || !gp_comp(str, PSTR("GARMC"))) {
 		return gp_rmc_parse(str);
 	}
-	if (!gp_comp(str, PSTR("$GPGGA")) || !gp_comp(str, PSTR("$GNGGA")) || !gp_comp(str, PSTR("$BDGGA")) || !gp_comp(str, PSTR("$GAGGA"))) {
+	if (!gp_comp(str, PSTR("GPGGA")) || !gp_comp(str, PSTR("GNGGA")) || !gp_comp(str, PSTR("BDGGA")) || !gp_comp(str, PSTR("GAGGA"))) {
 		gp_gga_parse(str);
 		return 0;
 	}
-	if (!System.gps_initialized && !gp_comp(str, PSTR("$PMTK011"))) {
+	if (!System.gps_initialized && !gp_comp(str, PSTR("PMTK011"))) {
 		gps_initialize();
 		return 0;
 	}
-	if (!gp_comp(str, PSTR("$PMTK001"))) {
+	if (!gp_comp(str, PSTR("PMTK001"))) {
 		pmtk001_parse(str);
 		return 0;
 	}
