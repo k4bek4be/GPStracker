@@ -29,8 +29,8 @@ static inline char fifo_get(volatile FIFO *fifo) __attribute__((always_inline));
 
 static inline void fifo_add(volatile FIFO *fifo, char element) {
 	unsigned char SREG_buf = SREG;
-	idx_t len = fifo->len;
 	cli();
+	idx_t len = fifo->len;
 	idx_t idx = (fifo->start + len++) % SZ_FIFO;
 	fifo->buff[idx] = element;
 	if (len > SZ_FIFO) {
@@ -43,8 +43,8 @@ static inline void fifo_add(volatile FIFO *fifo, char element) {
 
 static inline char fifo_get(volatile FIFO *fifo) {
 	char ret = 0;
-	unsigned char SREG_buf = SREG;
 	idx_t start;
+	unsigned char SREG_buf = SREG;
 	cli();
 	if (fifo->len > 0) {
 		start = fifo->start;
@@ -113,10 +113,10 @@ void _uart_put (uint8_t d)
 #if USE_TXINT
 	unsigned char SREG_buf;
 	idx_t len;
-	do {
+	do { /* wait for space in buffer */
 		SREG_buf = SREG;
 		cli();
-		len = TxFifo.len;
+		len = TxFifo.len; /* atomic length read */
 		SREG = SREG_buf;
 	} while (len >= SZ_FIFO);
 	fifo_add(&TxFifo, d);
