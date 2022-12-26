@@ -13,13 +13,14 @@
 /*  Get a line received from GPS module               */
 /*----------------------------------------------------*/
 
-UINT get_line (		/* 0:Brownout or timeout, >0: Number of bytes received. */
+uint16_t get_line (		/* 0:line incomplete or timed out, >0: Number of bytes received. */
 	char *buff,
-	UINT sz_buf
+	uint16_t sz_buf
 )
 {
 	char c;
-	UINT i = 0;
+	static uint16_t i = 0;
+	uint16_t ret_len;
 
 	set_timer(recv_timeout, 1000);
 
@@ -29,6 +30,8 @@ UINT get_line (		/* 0:Brownout or timeout, >0: Number of bytes received. */
 			return 0;	/* A brownout is detected */
 		if (timer_expired(recv_timeout))
 			return 0; /* timeout; continue the main loop */
+		if (System.keypress) /* process user keypress */
+			return 0;
 		if (!uart0_test()) {
 			sleep();
 			continue;
@@ -42,12 +45,16 @@ UINT get_line (		/* 0:Brownout or timeout, >0: Number of bytes received. */
 		}
 		buff[i++] = c;
 		uart1_put(c);
-		if (i >= sz_buf)
+		if (i >= sz_buf - 1) /* keep one byte for terminating character */
 			i = 0;	/* Buffer overflow (abort this line) */
 	}
-	uart1_put('\r');
-	uart1_put('\n');
-	return i;
+	ret_len = i;
+	i = 0;
+	if (ret_len > 0) {
+		uart1_put('\r');
+		uart1_put('\n');
+	}
+	return ret_len;
 }
 
 /* Compare sentence header string */
