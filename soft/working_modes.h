@@ -5,7 +5,7 @@
 #define MODE_MAIN_MENU	1
 #define MODE_SETTINGS_MENU	2
 
-#define MAIN_MENU_MAXPOS 2
+#define MAIN_MENU_MAXPOS 3
 
 #define STATE_PAUSE_TRACKING_NOTPAUSED	0
 #define STATE_PAUSE_TRACKING_JUSTPAUSED	1
@@ -33,4 +33,6 @@ void key_process(void);
 unsigned char enter_settings(void);
 void display_settings_menu_item(void);
 void display_main_menu_item(void);
+
+unsigned char tracking_pause(void);
 

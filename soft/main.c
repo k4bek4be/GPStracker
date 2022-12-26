@@ -346,6 +346,10 @@ int main (void)
 		uart0_init();	/* Enable UART */
 		_delay_ms(300);	/* Delay */
 		System.gps_initialized = 0;
+		
+		if (!get_flag(CONFFLAG_LOGGING_AFTER_BOOT)) {
+			tracking_pause();
+		}
 
 		for (;;) { /* main loop */
 			wdt_reset();
@@ -407,6 +411,12 @@ int main (void)
 					}
 					FLAGS &= ~F_SYNC;
 				}
+				if (System.open_new_file) {
+					close_files(1);
+					System.open_new_file = 0;
+					if (!System.tracking_paused)
+						tracking_pause();
+				}
 			}
 			if (System.location_valid == LOC_VALID_NEW) {
 				System.location_valid = LOC_VALID;
@@ -451,7 +461,7 @@ int main (void)
 				wdt_enable(WDTO_4S);
 				FLAGS |= F_FILEOPEN;
 				System.status = STATUS_OK;
-				beep(50, 2);		/* Two beeps. Start logging. */
+				beep(50, System.tracking_paused?5:2);		/* Two beeps. Start logging. */
 				display_state(DISPLAY_STATE_FILE_OPEN);
 				continue;
 			}

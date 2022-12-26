@@ -11,8 +11,9 @@
 /* flags list - max 31 */
 #define CONFFLAG_DISABLE_FILTERS	0
 #define CONFFLAG_ENABLE_SBAS		1
+#define CONFFLAG_LOGGING_AFTER_BOOT	2
 
-#define CONFFLAG_LAST				1
+#define CONFFLAG_LAST				2
 
 /* GNSS modes */
 #define GNSS_MODE_GPS_GLONASS_GALILEO	0
@@ -29,7 +30,7 @@
 #define HAVE_NEXT_SETTING_POSITION (mp.settings_menu_pos < SETTINGS_MENU_MAXPOS)
 #define HAVE_PREV_SETTING_POSITION (mp.settings_menu_pos > 0)
 
-#define SETTINGS_MENU_MAXPOS	4
+#define SETTINGS_MENU_MAXPOS	5
 
 struct config_s {
 	union {

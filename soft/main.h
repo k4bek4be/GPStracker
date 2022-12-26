@@ -149,6 +149,7 @@ struct system_s {
 	unsigned gps_initialized:1;
 	unsigned gps_only:1;
 	unsigned tracking_paused:1;
+	unsigned open_new_file:1;
 };
 
 struct location_s {

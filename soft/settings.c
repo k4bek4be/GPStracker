@@ -140,6 +140,7 @@ __flash const char _msg_disable_filters[] = "Nie filtruj";
 __flash const char _msg_enable_sbas[] = "Szukaj SBAS";
 __flash const char _msg_gnss_type[] = "Rodzaj GNSS";
 __flash const char _msg_skip_points[] = "Pomin punkty";
+__flash const char _msg_logging_after_boot[] = "Zapis po wlacz.";
 __flash const char _msg_back[] = "< Powrot";
 
 __flash const struct settings_menu_pos_s settings_menu[SETTINGS_MENU_MAXPOS+1] = {
@@ -172,6 +173,12 @@ __flash const struct settings_menu_pos_s settings_menu[SETTINGS_MENU_MAXPOS+1] =
 		.index = CONF_U8_GNSS_MODE,
 		.display = display_gnss_mode,
 		.changed = gps_initialize,
+	},
+	{
+		.type = SETTINGS_TYPE_BOOL,
+		.name = _msg_logging_after_boot,
+		.index = CONFFLAG_LOGGING_AFTER_BOOT,
+		.display = settings_bool_disp_default,
 	},
 };
 

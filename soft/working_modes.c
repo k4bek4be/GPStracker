@@ -69,7 +69,7 @@ const char *pause_tracking_get_name(void) {
 const char *save_point_get_name(void) {
 	switch (mp.point_save_state) {
 		default:
-			return PSTR("Zapisz punkt");
+			return PSTR("> Zapisz punkt");
 		case STATE_POINT_SAVE_NOT_DONE:
 			if (timer_expired(info_display))
 				mp.point_save_state = STATE_POINT_SAVE_READY;
@@ -94,6 +94,15 @@ unsigned char save_point(void) {
 	return MODE_NO_CHANGE;
 }
 
+unsigned char new_file(void) {
+	System.open_new_file = 1;
+	return MODE_NO_CHANGE;
+}
+
+const char *new_file_get_name(void) {
+	return PSTR("> Nowy plik");
+}
+
 __flash const struct main_menu_pos_s main_menu[MAIN_MENU_MAXPOS+1] = {
 	{
 		.func = save_point,
@@ -106,6 +115,10 @@ __flash const struct main_menu_pos_s main_menu[MAIN_MENU_MAXPOS+1] = {
 	{
 		.func = tracking_pause,
 		.get_name = pause_tracking_get_name,
+	},
+	{
+		.func = new_file,
+		.get_name = new_file_get_name,
 	},
 };
 
