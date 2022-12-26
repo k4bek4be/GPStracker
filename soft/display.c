@@ -211,6 +211,14 @@ void disp_time(__attribute__ ((unused)) unsigned char changed) {
 	xsprintf(disp.line2, PSTR("%d:%02d:%02d"), ct->tm_hour, ct->tm_min, ct->tm_sec);
 }
 
+void disp_func_temperature(__attribute__ ((unused)) unsigned char changed) {
+	strcpy_P(disp.line1, PSTR("Temperatura"));
+	if (System.temperature_ok) {
+		xsprintf(disp.line2, PSTR("%.1f stC"), System.temperature);
+	} else {
+		strcpy_P(disp.line2, PSTR("Blad!"));
+	}
+}
 void disp_func_main_menu(__attribute__ ((unused)) unsigned char changed) {
 	display_main_menu_item();
 }
@@ -235,6 +243,7 @@ void (*__flash const disp_funcs[])(unsigned char) = {
 	[DISPLAY_STATE_TIME] = disp_time,
 	[DISPLAY_STATE_MAIN_MENU] = disp_func_main_menu,
 	[DISPLAY_STATE_SETTINGS_MENU] = disp_func_settings_menu,
+	[DISPLAY_STATE_TEMPERATURE] = disp_func_temperature,
 };
 
 void display_refresh(unsigned char newstate) {

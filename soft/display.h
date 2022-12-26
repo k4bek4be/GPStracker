@@ -16,6 +16,7 @@
 #define DISPLAY_STATE_TIME	13
 #define DISPLAY_STATE_MAIN_MENU	14
 #define DISPLAY_STATE_SETTINGS_MENU	15
+#define DISPLAY_STATE_TEMPERATURE 16
 
 struct disp_s {
 	char line1[16];

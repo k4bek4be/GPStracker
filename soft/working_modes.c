@@ -16,6 +16,7 @@ __flash const unsigned char main_display_modes[] = {
 	DISPLAY_STATE_DIST_TIME,
 	DISPLAY_STATE_SPEED,
 	DISPLAY_STATE_TIME,
+	DISPLAY_STATE_TEMPERATURE,
 };
 
 const char *enter_settings_get_name(void) {
