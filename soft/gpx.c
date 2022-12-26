@@ -74,8 +74,8 @@ struct location_s *prev_points_get(unsigned char index){
 	unsigned char i, addr = gpx.prev_points.start;
 	for(i=0; i<index; i++){
 		addr++;
-		addr %= PREV_POINTS_LENGTH;
 	}
+	addr %= PREV_POINTS_LENGTH;
 	return &gpx.prev_points.data[addr];
 }
 
