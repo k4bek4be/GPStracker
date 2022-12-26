@@ -283,6 +283,7 @@ int main (void)
 	time_t tmp_utc, localtime;
 	FRESULT res;
 	unsigned char prev_status;
+	unsigned char already_logging = 0;
 
 	ioinit();
 	xdev_out(log_put);
@@ -350,7 +351,7 @@ int main (void)
 		_delay_ms(300);	/* Delay */
 		System.gps_initialized = 0;
 		
-		if (!get_flag(CONFFLAG_LOGGING_AFTER_BOOT)) {
+		if (!already_logging && !get_flag(CONFFLAG_LOGGING_AFTER_BOOT)) {
 			tracking_pause();
 		}
 
@@ -422,6 +423,8 @@ int main (void)
 					if (!System.tracking_paused)
 						tracking_pause();
 				}
+				if (!System.tracking_paused)
+					already_logging = 1; /* to avoid pausing on any reset caused by some error */
 			}
 			if (System.location_valid == LOC_VALID_NEW) {
 				System.location_valid = LOC_VALID;
