@@ -2,7 +2,7 @@
 PROJECT	= glg
 
 ### Source files and search directory
-CSRC    = main.c uart0.c uart1.c ff.c mmc.c 1wire.c ds18b20.c expander.c HD44780-I2C.c I2C.c xprintf.c gpx.c ffunicode.c display.c working_modes.o timec.o nmea.o settings.o
+CSRC    = main.c uart0.c uart1.c ff.c mmc.c 1wire.c ds18b20.c expander.c HD44780-I2C.c I2C.c xprintf.c gpx.c ffunicode.c display.c working_modes.o timec.o nmea.o settings.o menu.o
 ASRC    = stime.S
 VPATH   =
 

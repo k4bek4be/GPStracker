@@ -6,33 +6,20 @@
 #include "settings.h"
 #include "nmea.h"
 #include "gpx.h"
+#include "menu.h"
 
-static signed char display_mode_index;
 
-__flash const unsigned char main_display_modes[] = {
-	DISPLAY_STATE_MAIN_DEFAULT,
-	DISPLAY_STATE_COORD,
-	DISPLAY_STATE_ELE_SAT,
-	DISPLAY_STATE_DIST_TIME,
-	DISPLAY_STATE_SPEED,
-	DISPLAY_STATE_TIME,
-	DISPLAY_STATE_TEMPERATURE,
-};
+struct menu_params_s mp;
 
-const char *enter_settings_get_name(void) {
-	return PSTR("> Ustawienia");
-}
-
-unsigned char tracking_pause(void) {
+void tracking_pause(void) {
 	System.tracking_paused = !System.tracking_paused;
 	if (System.tracking_paused)
 		LEDB_ON();
 	else
 		LEDB_OFF();
-	return MODE_NO_CHANGE;
 }
 
-const char *pause_tracking_get_name(void) {
+__flash const char *pause_tracking_get_name(void) {
 	static unsigned char state = STATE_PAUSE_TRACKING_NOTPAUSED;
 	switch (state) {
 		default:
@@ -67,7 +54,7 @@ const char *pause_tracking_get_name(void) {
 	}
 }
 
-const char *save_point_get_name(void) {
+__flash const char *save_point_get_name(void) {
 	switch (mp.point_save_state) {
 		default:
 			return PSTR("> Zapisz punkt");
@@ -82,7 +69,7 @@ const char *save_point_get_name(void) {
 	}
 }
 
-unsigned char save_point(void) {
+void save_point(void) {
 	if (timer_expired(info_display)) { /* don't save too often */
 		if (System.location_valid) {
 			gpx_save_single_point(&location);
@@ -92,149 +79,114 @@ unsigned char save_point(void) {
 		}
 	}
 	set_timer(info_display, 2000);
-	return MODE_NO_CHANGE;
 }
 
-unsigned char new_file(void) {
+void new_file(void) {
 	System.open_new_file = 1;
-	return MODE_NO_CHANGE;
 }
 
-const char *new_file_get_name(void) {
-	return PSTR("> Nowy plik");
-}
+__flash const char _menu_header[] = "  *** MENU *** ";
+__flash const char _settings[] = "> Ustawienia";
+__flash const char _new_file[] = "> Nowy plik";
 
-__flash const struct main_menu_pos_s main_menu[MAIN_MENU_MAXPOS+1] = {
+__flash const struct menu_pos main_menu_list[] = {
 	{
+		.type = MENU_TYPE_FUNCTION,
+		.display_type = MENU_DISPLAY_TYPE_NAME_CSFUNCTION,
+		.name = _menu_header,
+		.csdisplay = save_point_get_name,
 		.func = save_point,
-		.get_name = save_point_get_name,
+		.allow_back = 1,
 	},
 	{
+		.type = MENU_TYPE_FUNCTION,
+		.display_type = MENU_DISPLAY_TYPE_STRING,
+		.name = _menu_header,
+		.value = _settings,
 		.func = enter_settings,
-		.get_name = enter_settings_get_name,
+		.allow_back = 1,
 	},
 	{
+		.type = MENU_TYPE_FUNCTION,
+		.display_type = MENU_DISPLAY_TYPE_NAME_CSFUNCTION,
+		.name = _menu_header,
+		.csdisplay = pause_tracking_get_name,
 		.func = tracking_pause,
-		.get_name = pause_tracking_get_name,
+		.allow_back = 1,
 	},
 	{
+		.type = MENU_TYPE_FUNCTION,
+		.display_type = MENU_DISPLAY_TYPE_STRING,
+		.name = _menu_header,
+		.value = _new_file,
 		.func = new_file,
-		.get_name = new_file_get_name,
+		.allow_back = 1,
 	},
 };
 
-struct menu_params_s mp;
-
-void change_display_mode(signed char dir) {
-	display_mode_index += dir;
-	if (display_mode_index < 0)
-		display_mode_index = sizeof(main_display_modes) - 1;
-	if (display_mode_index >= (signed char)sizeof(main_display_modes))
-		display_mode_index = 0;
-}
-
-unsigned char working_mode_default(unsigned char k) {
-	switch (k) {
-		case K_UP:
-			change_display_mode(-1);
-			break;
-		case K_DOWN:
-			change_display_mode(1);
-			break;
-		case K_RIGHT:
-			return MODE_MAIN_MENU;
-	}
-	display_state(main_display_modes[display_mode_index]);
-	return MODE_NO_CHANGE;
-}
-
-unsigned char working_mode_main_menu(unsigned char k) {
-	switch (k) {
-		case K_LEFT:
-			return MODE_DEFAULT;
-		case K_RIGHT:
-			if (main_menu[mp.main_menu_pos].func)
-				return main_menu[mp.main_menu_pos].func();
-			break;
-		case K_DOWN:
-			if (mp.main_menu_pos < MAIN_MENU_MAXPOS)
-				mp.main_menu_pos++;
-			break;
-		case K_UP:
-			if (mp.main_menu_pos > 0)
-				mp.main_menu_pos--;
-			break;
-	}
-	display_state(DISPLAY_STATE_MAIN_MENU);
-	return MODE_NO_CHANGE;
-}
-
-unsigned char working_mode_settings_menu(unsigned char k) {
-	switch (k) {
-		case K_LEFT:
-			if (settings_menu[mp.settings_menu_pos].type == SETTINGS_TYPE_BACK)
-				return MODE_MAIN_MENU;
-			/* fall through */
-		case K_RIGHT:
-			switch (settings_menu[mp.settings_menu_pos].type) {
-				case SETTINGS_TYPE_BOOL: settings_display_and_modify_bool(mp.settings_menu_pos, k); break;
-				case SETTINGS_TYPE_U8: settings_display_and_modify_u8(mp.settings_menu_pos, k); break;
-			}
-			break;
-		case K_DOWN:
-			if (mp.settings_menu_pos < SETTINGS_MENU_MAXPOS)
-				mp.settings_menu_pos++;
-			break;
-		case K_UP:
-			if (mp.settings_menu_pos > 0)
-				mp.settings_menu_pos--;
-			break;
-	}
-	return MODE_NO_CHANGE;
-}
-
-
-void display_main_menu_item(void) {
-	strcpy_P(disp.line1, PSTR("  *** MENU *** "));
-	strcpy_P(disp.line2, main_menu[mp.main_menu_pos].get_name());
-}
-
-void display_settings_menu_item(void) {
-	switch (settings_menu[mp.settings_menu_pos].type) {
-		case SETTINGS_TYPE_BOOL:
-			settings_display_and_modify_bool(mp.settings_menu_pos, 0);
-			break;
-		case SETTINGS_TYPE_U8:
-			settings_display_and_modify_u8(mp.settings_menu_pos, 0);
-			break;
-		case SETTINGS_TYPE_BACK:
-			strcpy_P(disp.line1, PSTR("* Ustawienia *"));
-			strcpy_P(disp.line2, settings_menu[mp.settings_menu_pos].name);
-			if (HAVE_NEXT_SETTING_POSITION)
-				strcat_P(disp.line2, PSTR(" \x01")); /* down arrow */
-			if (HAVE_PREV_SETTING_POSITION)
-				strcat_P(disp.line2, PSTR(" \x02")); /* up arrow */
-			break;
-	};
-}
-
-unsigned char (*__flash const working_modes[])(unsigned char) = {
-	working_mode_default,
-	working_mode_main_menu,
-	working_mode_settings_menu,
+__flash const struct menu_struct main_menu = {
+	.list = main_menu_list,
+	.num = sizeof(main_menu_list) / sizeof(main_menu_list[0]),
 };
 
-void key_process(void) {
-	unsigned char k = getkey();
-	unsigned char newmode = working_modes[System.working_mode](k);
-	if (newmode != MODE_NO_CHANGE && newmode != System.working_mode) {
-		LCD_Clear();
-		System.working_mode = newmode;
-	}
+__flash const struct menu_pos default_menu_list[] = {
+	{
+		.type = MENU_TYPE_FUNCTION,
+		.display_type = MENU_DISPLAY_TYPE_FUNCTION,
+		.display = disp_func_main_default,
+		.func = enter_main_menu,
+	},
+	{
+		.type = MENU_TYPE_FUNCTION,
+		.display_type = MENU_DISPLAY_TYPE_FUNCTION,
+		.display = disp_func_coord,
+		.func = enter_main_menu,
+	},
+	{
+		.type = MENU_TYPE_FUNCTION,
+		.display_type = MENU_DISPLAY_TYPE_FUNCTION,
+		.display = disp_func_ele_sat,
+		.func = enter_main_menu,
+	},
+	{
+		.type = MENU_TYPE_FUNCTION,
+		.display_type = MENU_DISPLAY_TYPE_FUNCTION,
+		.display = disp_distance_and_time,
+		.func = enter_main_menu,
+	},
+	{
+		.type = MENU_TYPE_FUNCTION,
+		.display_type = MENU_DISPLAY_TYPE_FUNCTION,
+		.display = disp_speed,
+		.func = enter_main_menu,
+	},
+	{
+		.type = MENU_TYPE_FUNCTION,
+		.display_type = MENU_DISPLAY_TYPE_FUNCTION,
+		.display = disp_time,
+		.func = enter_main_menu,
+	},
+	{
+		.type = MENU_TYPE_FUNCTION,
+		.display_type = MENU_DISPLAY_TYPE_FUNCTION,
+		.display = disp_func_temperature,
+		.func = enter_main_menu,
+	},
+};
+
+__flash const struct menu_struct default_menu = {
+	.list = default_menu_list,
+	.num = sizeof(default_menu_list) / sizeof(default_menu_list[0]),
+};
+
+
+void enter_settings(void) {
+	xprintf(PSTR("ENTER SETTINGS MENU, %d\r\n"), (int)__menu_num);
+	menu_push(settings_menu);
 }
 
-unsigned char enter_settings(void) {
-	display_state(DISPLAY_STATE_SETTINGS_MENU);
-	return MODE_SETTINGS_MENU;
+void enter_main_menu(void) {
+	xprintf(PSTR("ENTER MAIN MENU, %d\r\n"), (int)__menu_num);
+	menu_push(main_menu);
 }
 

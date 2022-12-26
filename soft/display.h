@@ -1,22 +1,12 @@
 #pragma once
 
-#define DISPLAY_STATE_NO_CHANGE	0
-#define DISPLAY_STATE_STARTUP	1
-#define DISPLAY_STATE_POWEROFF	2
-#define DISPLAY_STATE_POWEROFF_LOWBAT	3
-#define DISPLAY_STATE_START_MESSAGE	4
-#define DISPLAY_STATE_CARD_OK	5
-#define DISPLAY_STATE_FILE_OPEN	6
-#define DISPLAY_STATE_FILE_CLOSED	7
-#define DISPLAY_STATE_MAIN_DEFAULT	8
-#define DISPLAY_STATE_COORD	9
-#define DISPLAY_STATE_ELE_SAT	10
-#define DISPLAY_STATE_DIST_TIME	11
-#define DISPLAY_STATE_SPEED	12
-#define DISPLAY_STATE_TIME	13
-#define DISPLAY_STATE_MAIN_MENU	14
-#define DISPLAY_STATE_SETTINGS_MENU	15
-#define DISPLAY_STATE_TEMPERATURE 16
+#define DISPLAY_EVENT_STARTUP		0
+#define DISPLAY_EVENT_POWEROFF		1
+#define DISPLAY_EVENT_LOW_BATTERY	2
+#define DISPLAY_EVENT_INITIALIZED	3
+#define DISPLAY_EVENT_CARD_INITIALIZED	4
+#define DISPLAY_EVENT_FILE_OPEN		5
+#define DISPLAY_EVENT_FILE_CLOSED	6
 
 struct disp_s {
 	char line1[16];
@@ -26,6 +16,13 @@ struct disp_s {
 extern struct disp_s disp;
 
 void disp_init(void);
-void display_refresh(unsigned char newstate);
-void display_state(unsigned char newstate);
+void display_event(unsigned char event);
+void display_refresh(unsigned char changed);
+void disp_func_main_default(void);
+void disp_func_coord(void);
+void disp_func_ele_sat(void);
+void disp_distance_and_time(void);
+void disp_speed(void);
+void disp_time(void);
+void disp_func_temperature(void);
 

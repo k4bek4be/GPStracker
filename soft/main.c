@@ -28,6 +28,7 @@
 #include "timec.h"
 #include "nmea.h"
 #include "settings.h"
+#include "menu.h"
 
 /*FUSES = {0xFF, 0x11, 0xFE};*/		/* ATmega644PA fuses: Low, High, Extended.
 This is the fuse settings for this project. The fuse bits will be included
@@ -49,7 +50,7 @@ void start_bootloader(void) {
 	cli();
 	uart1_deinit();
 /*	close_files(0); // FIXME not working
-	display_state(DISPLAY_STATE_BOOTLOADER);*/
+	display_event(DISPLAY_EVENT_BOOTLOADER);*/
 	LCD_Clear(); /* Do not call display.c here! */
 	LCD_GoTo(0,0);
 	LCD_WriteTextP(PSTR("Aktualizacja"));
@@ -263,7 +264,7 @@ void close_files(unsigned char flush_logs) {
 		if (f_close(&system_log))
 			System.status = STATUS_FILE_CLOSE_ERROR;
 		xputs_P(PSTR("File closed\r\n"));
-		display_state(DISPLAY_STATE_FILE_CLOSED);
+		display_event(DISPLAY_EVENT_FILE_CLOSED);
 	}
 	FLAGS &= ~F_FILEOPEN;
 	disk_ioctl(0, CTRL_POWER, 0);
@@ -287,16 +288,18 @@ int main (void)
 	xdev_out(log_put);
 	xputs_P(PSTR("STARTUP\r\n"));
 	disp_init();
-	display_state(DISPLAY_STATE_STARTUP);
+	display_event(DISPLAY_EVENT_STARTUP);
 	settings_load();
+	
+	menu_push(default_menu);
 	
 	for (;;) {
 		wdt_reset();
 		if (FLAGS & (F_POWEROFF | F_LVD)) {
 			xputs_P(PSTR("POWEROFF\r\n"));
-			display_state(DISPLAY_STATE_POWEROFF);
+			display_event(DISPLAY_EVENT_POWEROFF);
 			if (FLAGS & F_LVD) {
-				display_state(DISPLAY_STATE_POWEROFF_LOWBAT);
+				display_event(DISPLAY_EVENT_LOW_BATTERY);
 				_delay_ms(500);
 			}
 			POWEROFF();
@@ -307,7 +310,7 @@ int main (void)
 			xputs_P(PSTR("RESTART\r\n"));
 		}
 
-		display_state(DISPLAY_STATE_START_MESSAGE);
+		display_event(DISPLAY_EVENT_INITIALIZED);
 		xprintf(PSTR("LOOP err=%u\r\n"), (unsigned int)System.status);
 		utc = 0;
 		localtime = 0;
@@ -336,7 +339,7 @@ int main (void)
 		}
 		System.status = STATUS_NO_GPS;
 		xputs(PSTR("FS Ok\r\n"));
-		display_state(DISPLAY_STATE_CARD_OK);
+		display_event(DISPLAY_EVENT_CARD_INITIALIZED);
 		beep(50, 1);				/* 1 beep */
 
 		/* Initialize GPS receiver */
@@ -353,9 +356,11 @@ int main (void)
 
 		for (;;) { /* main loop */
 			wdt_reset();
-			display_refresh(DISPLAY_STATE_NO_CHANGE);
 			gettemp();
-			key_process();
+			display_refresh(menu());
+			if (no_menu())
+				menu_push(default_menu); /* returned from top-level */
+
 			if (System.timers.backlight)
 				LEDW_ON();
 			else
@@ -462,7 +467,7 @@ int main (void)
 				FLAGS |= F_FILEOPEN;
 				System.status = STATUS_OK;
 				beep(50, System.tracking_paused?5:2);		/* Two beeps. Start logging. */
-				display_state(DISPLAY_STATE_FILE_OPEN);
+				display_event(DISPLAY_EVENT_FILE_OPEN);
 				continue;
 			}
 		}

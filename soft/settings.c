@@ -5,6 +5,7 @@
 #include "xprintf.h"
 #include "working_modes.h"
 #include "nmea.h"
+#include "menu.h"
 
 EEMEM struct config_s config_eep;
 EEMEM unsigned char config_crc;
@@ -58,47 +59,6 @@ void settings_store(void) {
 	xputs_P(PSTR("EEPROM write done\r\n"));
 }
 
-void settings_display_and_modify_bool(unsigned char mindex, unsigned char k) {
-	unsigned char index = settings_menu[mindex].index;
-	unsigned char val = get_flag(index);
-	const __flash char *name = settings_menu[mindex].name;
-
-	if (k ==  K_LEFT || k ==  K_RIGHT) { /* change value */
-		val = !val;
-		set_flag(index, val);
-		if (settings_menu[mindex].changed != NULL)
-			settings_menu[mindex].changed();
-	}
-
-	strcpy_P(disp.line1, name);
-	settings_menu[mindex].display(val);
-}
-
-void settings_display_and_modify_u8(unsigned char mindex, unsigned char k) {
-	unsigned char index = settings_menu[mindex].index;
-	unsigned char val = System.conf.conf_u8[index];
-	const __flash char *name = settings_menu[mindex].name;
-
-	if (k == K_LEFT) {
-		if (val)
-			val--;
-	}
-
-	if (k == K_RIGHT) {
-		if (val < limits_max_u8[index])
-			val++;
-	}
-
-	if (k ==  K_LEFT || k ==  K_RIGHT) {
-		System.conf.conf_u8[index] = val;
-		if (settings_menu[mindex].changed != NULL)
-			settings_menu[mindex].changed();
-	}
-
-	strcpy_P(disp.line1, name);
-	settings_menu[mindex].display(val);
-}
-
 unsigned char get_flag(unsigned char index) {
 	volatile unsigned char *sptr = &System.conf.flags[index/8];
 	index %= 8;
@@ -115,23 +75,12 @@ void set_flag(unsigned char index, unsigned char val) {
 		*sptr &= ~_BV(index);
 }
 
-void settings_bool_disp_default(unsigned char val) {
-	if (val)
-		strcpy_P(disp.line2, PSTR("< Tak > "));
-	else
-		strcpy_P(disp.line2, PSTR("< Nie > "));
-	strcat_P(disp.line2, HAVE_NEXT_SETTING_POSITION?PSTR(" \x01"):PSTR("  ")); /* down arrow */
-	strcat_P(disp.line2, HAVE_PREV_SETTING_POSITION?PSTR(" \x02"):PSTR("  ")); /* up arrow */
-}
-
-void settings_u8_disp_default(unsigned char val) {
-	xsprintf(disp.line2, PSTR("%d"), (int)val);
-	strcat_P(disp.line2, HAVE_NEXT_SETTING_POSITION?PSTR(" \x01"):PSTR("  ")); /* down arrow */
-	strcat_P(disp.line2, HAVE_PREV_SETTING_POSITION?PSTR(" \x02"):PSTR("  ")); /* up arrow */
-}
-
 void display_gnss_mode(unsigned char val) {
 	strcpy_P(disp.line2, gnss_names[val]);
+}
+
+void display_current_gnss_mode(void) {
+	display_gnss_mode(System.conf.gnss_mode);
 }
 
 /* SETTINGS ITEMS */
@@ -143,43 +92,47 @@ __flash const char _msg_skip_points[] = "Pomin punkty";
 __flash const char _msg_logging_after_boot[] = "Zapis po wlacz.";
 __flash const char _msg_back[] = "< Powrot";
 
-__flash const struct settings_menu_pos_s settings_menu[SETTINGS_MENU_MAXPOS+1] = {
+__flash const struct menu_pos settings_menu_list[] = {
 	{
-		.type = SETTINGS_TYPE_BACK,
+		.type = MENU_TYPE_DISPLAY,
+		.display_type = MENU_DISPLAY_TYPE_STRING,
 		.name = _msg_back,
+		.allow_back = 1,
 	},
 	{
-		.type = SETTINGS_TYPE_BOOL,
+		.type = MENU_TYPE_SETTING_BOOL,
 		.name = _msg_disable_filters,
 		.index = CONFFLAG_DISABLE_FILTERS,
-		.display = settings_bool_disp_default,
 	},
 	{
-		.type = SETTINGS_TYPE_U8,
+		.type = MENU_TYPE_SETTING_U8,
 		.name = _msg_skip_points,
 		.index = CONF_U8_SKIP_POINTS,
-		.display = settings_u8_disp_default,
 	},
 	{
-		.type = SETTINGS_TYPE_BOOL,
+		.type = MENU_TYPE_SETTING_BOOL,
 		.name = _msg_enable_sbas,
 		.index = CONFFLAG_ENABLE_SBAS,
-		.display = settings_bool_disp_default,
 		.changed = gps_initialize,
 	},
 	{
-		.type = SETTINGS_TYPE_U8,
+		.type = MENU_TYPE_SETTING_U8,
+		.display_type = MENU_DISPLAY_TYPE_NAME_FUNCTION,
 		.name = _msg_gnss_type,
 		.index = CONF_U8_GNSS_MODE,
-		.display = display_gnss_mode,
+		.display = display_current_gnss_mode,
 		.changed = gps_initialize,
 	},
 	{
-		.type = SETTINGS_TYPE_BOOL,
+		.type = MENU_TYPE_SETTING_BOOL,
 		.name = _msg_logging_after_boot,
 		.index = CONFFLAG_LOGGING_AFTER_BOOT,
-		.display = settings_bool_disp_default,
 	},
+};
+
+__flash const struct menu_struct settings_menu = {
+	.list = settings_menu_list,
+	.num = sizeof(settings_menu_list) / sizeof(settings_menu_list[0]),
 };
 
 __flash const char gnss_gps_glonass_galileo[] = "GPS+GL.NS+GAL.EO";

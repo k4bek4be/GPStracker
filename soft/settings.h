@@ -23,15 +23,6 @@
 #define GNSS_MODE_GPS_BEIDOU			4
 #define GNSS_MODE_BEIDOU				5
 
-#define SETTINGS_TYPE_BACK	0
-#define SETTINGS_TYPE_BOOL	1
-#define SETTINGS_TYPE_U8	2
-
-#define HAVE_NEXT_SETTING_POSITION (mp.settings_menu_pos < SETTINGS_MENU_MAXPOS)
-#define HAVE_PREV_SETTING_POSITION (mp.settings_menu_pos > 0)
-
-#define SETTINGS_MENU_MAXPOS	5
-
 struct config_s {
 	union {
 		unsigned char conf_u8[16];
@@ -43,17 +34,9 @@ struct config_s {
 	unsigned char flags[4];
 };
 
-struct settings_menu_pos_s {
-	unsigned char type;
-	__flash const char *name;
-	unsigned char index;
-	void (* changed)(void);
-	void (* display)(unsigned char);
-};
-
 extern const __flash unsigned char limits_max_u8[];
-extern __flash const struct settings_menu_pos_s settings_menu[SETTINGS_MENU_MAXPOS+1];
 extern __flash const char *gnss_names[];
+extern __flash const struct menu_struct settings_menu;
 
 unsigned char settings_load(void); /* 0 - ok, 1 - error */
 void settings_store(void);
