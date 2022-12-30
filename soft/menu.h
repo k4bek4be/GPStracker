@@ -34,7 +34,7 @@ struct menu_pos {
 	};
 	unsigned char index;			// index when IS_SETTING()
 	void (* changed)(void);			// what to call on changed value when IS_SETTING()
-	void (* func)(void);			// what to call on MENU_DISPLAY_TYPE_NAME_FUNCTION
+	unsigned char (* func)(void);			// what to call on MENU_DISPLAY_TYPE_NAME_FUNCTION; returns true if display refresh is needed
 	unsigned char allow_back;		// left arrow will return to level up
 };
 

@@ -114,6 +114,10 @@ __flash const char _file_close_error[] =	"Blad zamk.pliku!";
 __flash const char _file_open_error[] =	"Blad otw. pliku!";
 __flash const char _files_closed[] =	"Pliki zamkniete";
 __flash const char _files_open[] =		"Pliki otwarte";
+__flash const char _tracking_paused[] =	"Wstrzymano!";
+__flash const char _tracking_resumed[] =	"Wznowiono!";
+__flash const char _point_saved[] =		"Zapisano!";
+__flash const char _point_not_saved[] =	"Nie zapisano!";
 
 void display_event(unsigned char event) { /* overrides display with current messages */
 	switch (event) {
@@ -147,6 +151,18 @@ void display_event(unsigned char event) { /* overrides display with current mess
 			break;
 		case DISPLAY_EVENT_FILE_OPEN:
 			strcpy_P(disp.line2, _files_open);
+			break;
+		case DISPLAY_EVENT_TRACKING_PAUSED:
+			strcpy_P(disp.line2, _tracking_paused);
+			break;
+		case DISPLAY_EVENT_TRACKING_RESUMED:
+			strcpy_P(disp.line2, _tracking_resumed);
+			break;
+		case DISPLAY_EVENT_POINT_SAVED:
+			strcpy_P(disp.line2, _point_saved);
+			break;
+		case DISPLAY_EVENT_POINT_NOT_SAVED:
+			strcpy_P(disp.line2, _point_not_saved);
 			break;
 	}
 	display_refresh(1);

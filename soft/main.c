@@ -352,13 +352,14 @@ int main (void)
 		System.gps_initialized = 0;
 		
 		if (!already_logging && !get_flag(CONFFLAG_LOGGING_AFTER_BOOT)) {
-			tracking_pause();
+			tracking_pause(TRACKING_PAUSE_CMD_PAUSE, 0);
 		}
 
 		for (;;) { /* main loop */
 			wdt_reset();
 			gettemp();
-			display_refresh(menu());
+			menu();
+			display_refresh(0);
 			if (no_menu())
 				menu_push(default_menu); /* returned from top-level */
 
@@ -421,7 +422,7 @@ int main (void)
 					close_files(1);
 					System.open_new_file = 0;
 					if (!System.tracking_paused)
-						tracking_pause();
+						tracking_pause(TRACKING_PAUSE_CMD_PAUSE, 0);
 				}
 				if (!System.tracking_paused)
 					already_logging = 1; /* to avoid pausing on any reset caused by some error */

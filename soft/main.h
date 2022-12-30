@@ -127,7 +127,6 @@ struct timers {
 	unsigned int system_log;
 	unsigned int lcd;
 	unsigned int backlight;
-	unsigned int info_display;
 };
 
 struct system_s {

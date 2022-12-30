@@ -140,15 +140,9 @@ unsigned char menu(void) {
 			break;
 		case MENU_TYPE_FUNCTION:
 			if (k == K_RIGHT) {
-				pos.func();
-				display_changed = 1;
+				display_changed = pos.func();
 			}
 			break;
-	}
-	
-	if (pos.allow_back && k == K_LEFT) {
-		menu_pop();
-		return 0;
 	}
 	
 	if (display_line1_as_string) {
@@ -158,9 +152,16 @@ unsigned char menu(void) {
 			strcpy_P(disp.line1, _NULL_STRING);
 		}
 	}
+
+	if (pos.allow_back && k == K_LEFT) {
+		menu_pop();
+		display_changed = 1;
+	}
 	
-	if (display_changed)
+	if (display_changed) {
+		display_refresh(1);
 		set_timer(lcd, 50); /* ensure update on next iteration */
+	}
 	return 1;
 }
 
