@@ -103,28 +103,39 @@ __flash const char _gps_ok[] =			"GPS OK!";
 __flash const char _card_ok[] =			"Karta OK!";
 __flash const char _logging_active[] =	"Zapis aktywny";
 __flash const char _logging_paused[] =	"Zapis wstrzymany";
+__flash const char _starting[] =		"Uruchamianie...";
+__flash const char _battery_low[] =		"Bateria slaba!";
+__flash const char _shutting_down[] =	"Wylaczanie...";
+__flash const char _no_card[] =			"Brak karty!";
+__flash const char _card_error[] =		"Blad karty!";
+__flash const char _write_error[] =		"Blad zapisu!";
+__flash const char _fat_write_error[] =	"Blad zapisu FAT!";
+__flash const char _file_close_error[] =	"Blad zamk.pliku!";
+__flash const char _file_open_error[] =	"Blad otw. pliku!";
+__flash const char _files_closed[] =	"Pliki zamkniete";
+__flash const char _files_open[] =		"Pliki otwarte";
 
 void display_event(unsigned char event) { /* overrides display with current messages */
 	switch (event) {
 		case DISPLAY_EVENT_STARTUP:
-			strcpy_P(disp.line1, PSTR("Uruchamianie..."));
+			strcpy_P(disp.line1, _starting);
 			break;
 		case DISPLAY_EVENT_LOW_BATTERY:
-			strcpy_P(disp.line2, PSTR("Bateria slaba!"));
+			strcpy_P(disp.line2, _battery_low);
 		/* fall through */
 		case DISPLAY_EVENT_POWEROFF:
-			strcpy_P(disp.line1, PSTR("Wylaczanie..."));
+			strcpy_P(disp.line1, _shutting_down);
 			break;
 		case DISPLAY_EVENT_INITIALIZED:
 			strcpy_P(disp.line1, PSTR("Start"));
 			switch(System.status){
 				case STATUS_NO_POWER: case STATUS_OK: case STATUS_NO_GPS: disp.line2[0] = '\0'; break;
-				case STATUS_NO_DISK:			strcpy_P(disp.line2, PSTR("Brak karty!")); break;
-				case STATUS_DISK_ERROR:			strcpy_P(disp.line2, PSTR("Blad karty!")); break;
-				case STATUS_FILE_WRITE_ERROR:	strcpy_P(disp.line2, PSTR("Blad zapisu!")); break;
-				case STATUS_FILE_SYNC_ERROR:	strcpy_P(disp.line2, PSTR("Blad zapisu FAT!")); break;
-				case STATUS_FILE_CLOSE_ERROR:	strcpy_P(disp.line2, PSTR("Blad zamk.pliku!")); break;
-				case STATUS_FILE_OPEN_ERROR:	strcpy_P(disp.line2, PSTR("Blad otw. pliku!")); break;
+				case STATUS_NO_DISK:			strcpy_P(disp.line2, _no_card); break;
+				case STATUS_DISK_ERROR:			strcpy_P(disp.line2, _card_error); break;
+				case STATUS_FILE_WRITE_ERROR:	strcpy_P(disp.line2, _write_error); break;
+				case STATUS_FILE_SYNC_ERROR:	strcpy_P(disp.line2, _fat_write_error); break;
+				case STATUS_FILE_CLOSE_ERROR:	strcpy_P(disp.line2, _file_close_error); break;
+				case STATUS_FILE_OPEN_ERROR:	strcpy_P(disp.line2, _file_open_error); break;
 			}
 			break;
 		case DISPLAY_EVENT_CARD_INITIALIZED:
@@ -132,10 +143,10 @@ void display_event(unsigned char event) { /* overrides display with current mess
 			strcpy_P(disp.line2, _gps_wait);
 			break;
 		case DISPLAY_EVENT_FILE_CLOSED:
-			strcpy_P(disp.line2, PSTR("Pliki zamkniete"));
+			strcpy_P(disp.line2, _files_closed);
 			break;
 		case DISPLAY_EVENT_FILE_OPEN:
-			strcpy_P(disp.line2, PSTR("Pliki otwarte"));
+			strcpy_P(disp.line2, _files_open);
 			break;
 	}
 	display_refresh(1);
