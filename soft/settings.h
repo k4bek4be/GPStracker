@@ -5,15 +5,18 @@
 /* u8 list - max 15 */
 #define CONF_U8_GNSS_MODE	0
 #define CONF_U8_SKIP_POINTS	1
+#define CONF_U8_AUTO_PAUSE_TIME	2
+#define CONF_U8_AUTO_PAUSE_DIST	3
 
-#define CONF_U8_LAST		1
+#define CONF_U8_LAST		3
 
 /* flags list - max 31 */
 #define CONFFLAG_DISABLE_FILTERS	0
 #define CONFFLAG_ENABLE_SBAS		1
 #define CONFFLAG_LOGGING_AFTER_BOOT	2
+#define CONFFLAG_AUTO_PAUSE			3
 
-#define CONFFLAG_LAST				2
+#define CONFFLAG_LAST				3
 
 /* GNSS modes */
 #define GNSS_MODE_GPS_GLONASS_GALILEO	0
@@ -27,14 +30,17 @@ struct config_s {
 	union {
 		unsigned char conf_u8[16];
 		struct {
-			unsigned char gnss_mode; // 0
-			unsigned char skip_points; // 1
+			unsigned char gnss_mode;	// 0
+			unsigned char skip_points;	// 1
+			unsigned char auto_pause_time;	// 2
+			unsigned char auto_pause_dist;	// 3
 		};
 	};
 	unsigned char flags[4];
 };
 
 extern const __flash unsigned char limits_max_u8[];
+extern const __flash unsigned char limits_min_u8[];
 extern __flash const char *gnss_names[];
 extern __flash const struct menu_struct settings_menu;
 

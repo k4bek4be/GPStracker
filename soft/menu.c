@@ -8,22 +8,39 @@ unsigned char __menu_num; // Menu stack variables
 struct menu_struct __menu_data[DATA_NUM];
 __flash const char _NULL_STRING[] = "(NULL)";
 
+void make_arrows(void) {
+	strcat_P(disp.line2, HAVE_NEXT_SETTING_POSITION?PSTR(" \x01"):PSTR("  ")); /* down arrow */
+	strcat_P(disp.line2, HAVE_PREV_SETTING_POSITION?PSTR(" \x02"):PSTR("  ")); /* up arrow */
+}
+
 void settings_display_bool(unsigned char index) {
 	unsigned char val = get_flag(index);
 	if (val)
 		strcpy_P(disp.line2, PSTR("< Tak > "));
 	else
 		strcpy_P(disp.line2, PSTR("< Nie > "));
-	strcat_P(disp.line2, HAVE_NEXT_SETTING_POSITION?PSTR(" \x01"):PSTR("  ")); /* down arrow */
-	strcat_P(disp.line2, HAVE_PREV_SETTING_POSITION?PSTR(" \x02"):PSTR("  ")); /* up arrow */
+	make_arrows();
 }
 
 void settings_display_u8(unsigned char index) {
 	unsigned char val = System.conf.conf_u8[index];
 	
 	xsprintf(disp.line2, PSTR("%d"), (int)val);
-	strcat_P(disp.line2, HAVE_NEXT_SETTING_POSITION?PSTR(" \x01"):PSTR("  ")); /* down arrow */
-	strcat_P(disp.line2, HAVE_PREV_SETTING_POSITION?PSTR(" \x02"):PSTR("  ")); /* up arrow */
+	make_arrows();
+}
+
+void settings_display_u8_seconds(unsigned char index) {
+	unsigned char val = System.conf.conf_u8[index];
+	
+	xsprintf(disp.line2, PSTR("%d s"), (int)val);
+	make_arrows();
+}
+
+void settings_display_u8_meters(unsigned char index) {
+	unsigned char val = System.conf.conf_u8[index];
+	
+	xsprintf(disp.line2, PSTR("%d m"), (int)val);
+	make_arrows();
 }
 
 void settings_change_bool(struct menu_pos pos, unsigned char k) {
@@ -43,7 +60,7 @@ void settings_change_u8(struct menu_pos pos, unsigned char k) {
 	unsigned char val = System.conf.conf_u8[index];
 
 	if (k == K_LEFT) {
-		if (val)
+		if (val > limits_min_u8[index])
 			val--;
 	}
 
@@ -109,6 +126,14 @@ unsigned char menu(void) {
 		case MENU_DISPLAY_TYPE_NAME_CSFUNCTION:
 			display_line1_as_string = 1;
 			strcpy_P(disp.line2, pos.csdisplay());
+			break;
+		case MENU_DISPLAY_TYPE_U8_METERS: /* maybe use postfixes instead? */
+			settings_display_u8_meters(pos.index);
+			display_line1_as_string = 1;
+			break;
+		case MENU_DISPLAY_TYPE_U8_SECONDS:
+			settings_display_u8_seconds(pos.index);
+			display_line1_as_string = 1;
 			break;
 		default:	/* bad data */
 			break;

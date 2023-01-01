@@ -43,6 +43,7 @@ FIL system_log;				/* System log file */
 char Line[100];				/* Line buffer */
 time_t utc;					/* current time */
 struct location_s location;
+struct auto_pause_s auto_pause;
 
 void start_bootloader(void) {
 	typedef void (*do_reboot_t)(void);
@@ -408,8 +409,31 @@ int main (void)
 					System.status = STATUS_FILE_WRITE_ERROR;
 					break;
 				}
-				if (System.location_valid == LOC_VALID_NEW) /* a new point */
+				if (System.location_valid == LOC_VALID_NEW) { /* a new point */
 					gpx_process_point(&location, &gpx_file);
+					/* auto-pausing */
+					if (System.tracking_paused || !get_flag(CONFFLAG_AUTO_PAUSE)) {
+						System.tracking_auto_paused = 0;
+						auto_pause.prev_distance = System.distance;
+						auto_pause.point_counter = 0;
+					} else {
+						if (++auto_pause.point_counter >= System.conf.auto_pause_time) {
+							auto_pause.point_counter = 0;
+							if ((System.distance - auto_pause.prev_distance)/100 > System.conf.auto_pause_dist) {
+								if (System.tracking_auto_paused) {
+									System.tracking_auto_paused = 0;
+									beep(50, 4);
+								}
+							} else {
+								if (!System.tracking_auto_paused) {
+									System.tracking_auto_paused = 1;
+									beep(50, 3);
+								}
+							}
+							auto_pause.prev_distance = System.distance;
+						}
+					}					
+				}
 				wdt_reset();
 				if (FLAGS & F_SYNC) {
 					if (f_sync(&gps_log)) {
@@ -470,7 +494,7 @@ int main (void)
 				wdt_enable(WDTO_4S);
 				FLAGS |= F_FILEOPEN;
 				System.status = STATUS_OK;
-				beep(50, System.tracking_paused?5:2);		/* Two beeps. Start logging. */
+				beep(50, System.tracking_paused?8:2);		/* Two beeps. Start logging. */
 				display_event(DISPLAY_EVENT_FILE_OPEN);
 				continue;
 			}

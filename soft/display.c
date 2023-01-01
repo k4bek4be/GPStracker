@@ -118,6 +118,7 @@ __flash const char _tracking_paused[] =	"Wstrzymano!";
 __flash const char _tracking_resumed[] =	"Wznowiono!";
 __flash const char _point_saved[] =		"Zapisano!";
 __flash const char _point_not_saved[] =	"Nie zapisano!";
+__flash const char _logging_auto_paused[] = "Autom. wstrzym.";
 
 void display_event(unsigned char event) { /* overrides display with current messages */
 	switch (event) {
@@ -170,10 +171,13 @@ void display_event(unsigned char event) { /* overrides display with current mess
 
 void disp_func_main_default(void) {
 	if (FLAGS & F_FILEOPEN) {
-		if (System.tracking_paused)
+		if (System.tracking_paused) {
 			strcpy_P(disp.line1, _logging_paused);
-		else
+		} else if (System.tracking_auto_paused) {
+			strcpy_P(disp.line1, _logging_auto_paused);
+		} else {
 			strcpy_P(disp.line1, _logging_active);
+		}
 	} else
 		strcpy_P(disp.line1, _card_ok);
 

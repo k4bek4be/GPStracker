@@ -125,8 +125,9 @@ void gpx_save_single_point(struct location_s *loc) {
 unsigned char gpx_write(struct location_s *loc, FIL *file) {
 	unsigned int bw;
 	const char *time;
+	unsigned char paused = System.tracking_paused || System.tracking_auto_paused;
 
-	if (System.tracking_paused) {
+	if (paused) {
 		if (!gpx.paused) {
 			strcpy_P(buf, xml_trkseg_end);
 			gpx.paused = 1;

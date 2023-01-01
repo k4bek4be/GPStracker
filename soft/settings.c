@@ -11,8 +11,24 @@ EEMEM struct config_s config_eep;
 EEMEM unsigned char config_crc;
 
 const __flash unsigned char limits_max_u8[] = {
-	[CONF_U8_GNSS_MODE] = 5,
+	[CONF_U8_GNSS_MODE] = GNSS_MODE_BEIDOU,
 	[CONF_U8_SKIP_POINTS] = 120,
+	[CONF_U8_AUTO_PAUSE_TIME] = 120,
+	[CONF_U8_AUTO_PAUSE_DIST] = 100,
+};
+
+const __flash unsigned char limits_min_u8[] = {
+	[CONF_U8_GNSS_MODE] = GNSS_MODE_GPS_GLONASS_GALILEO,
+	[CONF_U8_SKIP_POINTS] = 0,
+	[CONF_U8_AUTO_PAUSE_TIME] = 10,
+	[CONF_U8_AUTO_PAUSE_DIST] = 2,
+};
+
+const __flash unsigned char defaults_u8[] = {
+	[CONF_U8_GNSS_MODE] = GNSS_MODE_GPS_GLONASS_GALILEO,
+	[CONF_U8_SKIP_POINTS] = 15,
+	[CONF_U8_AUTO_PAUSE_TIME] = 30,
+	[CONF_U8_AUTO_PAUSE_DIST] = 10,
 };
 
 unsigned char settings_load(void) { /* 0 - ok, 1 - error */
@@ -40,9 +56,9 @@ unsigned char settings_load(void) { /* 0 - ok, 1 - error */
 unsigned char check_config_data(void) { /* 0 - ok, 1 - error */
 	unsigned char i, ret=0;
 	for (i=0; i<=CONF_U8_LAST; i++) {
-		if (System.conf.conf_u8[i] > limits_max_u8[i]) {
+		if (System.conf.conf_u8[i] > limits_max_u8[i] || System.conf.conf_u8[i] < limits_min_u8[i]) {
 			ret = 1;
-			System.conf.conf_u8[i] = 0;
+			System.conf.conf_u8[i] = defaults_u8[i];
 		}
 	}
 	return ret;
@@ -91,6 +107,9 @@ __flash const char _msg_gnss_type[] = "Rodzaj GNSS";
 __flash const char _msg_skip_points[] = "Pomin punkty";
 __flash const char _msg_logging_after_boot[] = "Zapis po wlacz.";
 __flash const char _msg_back[] = "< Powrot";
+__flash const char _msg_auto_pause[] = "Autopauza";
+__flash const char _msg_auto_pause_time[] = "Autopauza czas";
+__flash const char _msg_auto_pause_dist[] = "Autopauza odleg";
 
 __flash const struct menu_pos settings_menu_list[] = {
 	{
@@ -98,6 +117,22 @@ __flash const struct menu_pos settings_menu_list[] = {
 		.display_type = MENU_DISPLAY_TYPE_STRING,
 		.name = _msg_back,
 		.allow_back = 1,
+	},
+	{
+		.type = MENU_TYPE_SETTING_BOOL,
+		.name = _msg_auto_pause,
+		.index = CONFFLAG_AUTO_PAUSE,
+	},
+	{
+		.type = MENU_TYPE_SETTING_U8,
+		.name = _msg_auto_pause_time,
+		.index = CONF_U8_AUTO_PAUSE_TIME,
+	},
+	{
+		.type = MENU_TYPE_SETTING_U8,
+		.display_type = MENU_DISPLAY_TYPE_U8_METERS,
+		.name = _msg_auto_pause_dist,
+		.index = CONF_U8_AUTO_PAUSE_DIST,
 	},
 	{
 		.type = MENU_TYPE_SETTING_BOOL,

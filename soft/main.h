@@ -148,6 +148,7 @@ struct system_s {
 	unsigned gps_initialized:1;
 	unsigned gps_only:1;
 	unsigned tracking_paused:1;
+	unsigned tracking_auto_paused:1;
 	unsigned open_new_file:1;
 };
 
@@ -156,6 +157,11 @@ struct location_s {
 	float lat;
 	float alt;
 	time_t time;
+};
+
+struct auto_pause_s {
+	unsigned char point_counter;
+	unsigned long int prev_distance;
 };
 
 extern volatile struct system_s System;
