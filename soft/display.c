@@ -119,6 +119,7 @@ __flash const char _tracking_resumed[] =	"Wznowiono!";
 __flash const char _point_saved[] =		"Zapisano!";
 __flash const char _point_not_saved[] =	"Nie zapisano!";
 __flash const char _logging_auto_paused[] = "Autom. wstrzym.";
+__flash const char _sat_count_low[] = "Za malo satelit";
 
 void display_event(unsigned char event) { /* overrides display with current messages */
 	switch (event) {
@@ -181,10 +182,14 @@ void disp_func_main_default(void) {
 	} else
 		strcpy_P(disp.line1, _card_ok);
 
-	if (FLAGS & F_GPSOK)
-		strcpy_P(disp.line2, _gps_ok);
-	else
+	if (FLAGS & F_GPSOK) {
+		if (System.sat_count_low)
+			strcpy_P(disp.line2, _sat_count_low);
+		else
+			strcpy_P(disp.line2, _gps_ok);
+	} else {
 		strcpy_P(disp.line2, _gps_wait);
+	}
 }
 
 void disp_func_coord(void) {

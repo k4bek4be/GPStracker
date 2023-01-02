@@ -15,6 +15,7 @@ const __flash unsigned char limits_max_u8[] = {
 	[CONF_U8_SKIP_POINTS] = 120,
 	[CONF_U8_AUTO_PAUSE_TIME] = 120,
 	[CONF_U8_AUTO_PAUSE_DIST] = 100,
+	[CONF_U8_MIN_SATS] = 12,
 };
 
 const __flash unsigned char limits_min_u8[] = {
@@ -22,6 +23,7 @@ const __flash unsigned char limits_min_u8[] = {
 	[CONF_U8_SKIP_POINTS] = 0,
 	[CONF_U8_AUTO_PAUSE_TIME] = 10,
 	[CONF_U8_AUTO_PAUSE_DIST] = 2,
+	[CONF_U8_MIN_SATS] = 4,
 };
 
 const __flash unsigned char defaults_u8[] = {
@@ -29,6 +31,7 @@ const __flash unsigned char defaults_u8[] = {
 	[CONF_U8_SKIP_POINTS] = 15,
 	[CONF_U8_AUTO_PAUSE_TIME] = 30,
 	[CONF_U8_AUTO_PAUSE_DIST] = 10,
+	[CONF_U8_MIN_SATS] = 5,
 };
 
 unsigned char settings_load(void) { /* 0 - ok, 1 - error */
@@ -61,6 +64,7 @@ unsigned char check_config_data(void) { /* 0 - ok, 1 - error */
 			System.conf.conf_u8[i] = defaults_u8[i];
 		}
 	}
+	check_min_sat_limit();
 	return ret;
 }
 
@@ -110,6 +114,7 @@ __flash const char _msg_back[] = "< Powrot";
 __flash const char _msg_auto_pause[] = "Autopauza";
 __flash const char _msg_auto_pause_time[] = "Autopauza czas";
 __flash const char _msg_auto_pause_dist[] = "Autopauza odleg";
+__flash const char _msg_min_sats[] = "Minimum satelit";
 
 __flash const struct menu_pos settings_menu_list[] = {
 	{
@@ -149,6 +154,12 @@ __flash const struct menu_pos settings_menu_list[] = {
 		.name = _msg_enable_sbas,
 		.index = CONFFLAG_ENABLE_SBAS,
 		.changed = gps_initialize,
+	},
+	{
+		.type = MENU_TYPE_SETTING_U8,
+		.name = _msg_min_sats,
+		.index = CONF_U8_MIN_SATS,
+		.changed = check_min_sat_limit,
 	},
 	{
 		.type = MENU_TYPE_SETTING_U8,

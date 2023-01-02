@@ -404,8 +404,8 @@ int main (void)
 			}
 
 			if (FLAGS & F_FILEOPEN) {
-				f_write(&gps_log, Line, len, &bw);
-				if (bw != len) {
+				f_write(&gps_log, Line, len-1, &bw);
+				if (bw != len-1) {
 					System.status = STATUS_FILE_WRITE_ERROR;
 					break;
 				}

@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <avr/sleep.h>
 #include "nmea.h"
 #include "main.h"
@@ -40,12 +41,14 @@ uint16_t get_line (		/* 0:line incomplete or timed out, >0: Number of bytes rece
 		if (i == 0 && c != '$' )
 			continue;	/* Find start of line */
 		if (c == '\n' || c == '\r') {
+			buff[i++] = '\r';
+			buff[i++] = '\n';
 			buff[i++] = '\0'; /* add null termination for string */
 			break;	/* EOL */
 		}
 		buff[i++] = c;
 		uart1_put(c);
-		if (i >= sz_buf - 1) /* keep one byte for terminating character */
+		if (i >= sz_buf - 3) /* keep 3 bytes for terminating character */
 			i = 0;	/* Buffer overflow (abort this line) */
 	}
 	ret_len = i;
@@ -150,6 +153,12 @@ static void gp_gga_parse(const char *str) {
 	p = gp_col(str, 7); /* satellites used */
 	System.satellites_used = atoi(p);
 
+	if (System.satellites_used >= System.conf.min_sats) {
+		System.sat_count_low = 0;
+	} else {
+		System.sat_count_low = 1;
+	}
+
 	/* check validity */
 	p = gp_col(str, 6);
 	if (*p == '0') {
@@ -157,7 +166,8 @@ static void gp_gga_parse(const char *str) {
 		return;
 	}
 	
-	System.location_valid = LOC_VALID_NEW;
+	if (!System.sat_count_low)
+		System.location_valid = LOC_VALID_NEW; /* don't accept the coordinates otherwise, even if reported valid */
 
 	/* parse location */
 	p = gp_col(str, 2);		/* latitude */
@@ -218,17 +228,17 @@ static void pmtk001_parse(const char *str) {
 
 unsigned char nmea_checksum(const char *str) {
 	unsigned char cs = 0;
-	while (*str) {
+	while (*str && *str != '*') {
 		cs ^= *str++; /* NMEA checksum is quite primitive, but still should catch simple bitstream errors or truncated lines */
 	}
 	return cs;
 }
 
-time_t gps_parse(char *str) {	/* Get all required data from NMEA sentences */
-	unsigned int len = strlen(str);
+time_t gps_parse(const char *str) {	/* Get all required data from NMEA sentences */
+	signed int len = strlen(str)-2; /* remove final \r\n */
 	const char *checksum;
 	unsigned char calc_checksum, inc_checksum;
-	unsigned int i;
+	signed int i;
 	char c;
 
 	if (len < 4)
@@ -240,7 +250,7 @@ time_t gps_parse(char *str) {	/* Get all required data from NMEA sentences */
 	}
 	checksum = str+i+1; /* skip * character */
 	inc_checksum = 0; /* parse hex string */
-	while (*checksum) {
+	while (*checksum && isalnum(*checksum)) {
 		inc_checksum *= 16;
 		c = *checksum++;
 		if (c >= '0' && c <= '9') {
@@ -255,8 +265,7 @@ time_t gps_parse(char *str) {	/* Get all required data from NMEA sentences */
 		}
 	}
 	
-	str[i] = '\0'; /* drop checksum (*xx) and initial $ */
-	str++;
+	str++; /* drop initial $ */
 
 	calc_checksum = nmea_checksum(str);
 	if (inc_checksum != calc_checksum) {
@@ -325,5 +334,12 @@ void gps_initialize(void) {
 	}
 	xputs_P(PSTR("GPS init sent\r\n"));
 	System.gps_initialized = 1;
+}
+
+void check_min_sat_limit(void) {
+	if (System.conf.min_sats > 6 && (System.conf.gnss_mode == GNSS_MODE_GPS || System.conf.gnss_mode == GNSS_MODE_GALILEO || System.conf.gnss_mode == GNSS_MODE_BEIDOU)) {
+		 /* by geometry, max visible number is 6..12 */
+		 System.conf.min_sats = 6;
+	}
 }
 

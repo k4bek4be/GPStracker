@@ -150,6 +150,7 @@ struct system_s {
 	unsigned tracking_paused:1;
 	unsigned tracking_auto_paused:1;
 	unsigned open_new_file:1;
+	unsigned sat_count_low:1;
 };
 
 struct location_s {
