@@ -113,6 +113,7 @@ __flash const char _msg_enable_sbas[] = "Szukaj SBAS";
 __flash const char _msg_gnss_type[] = "Rodzaj GNSS";
 __flash const char _msg_skip_points[] = "Pomin punkty";
 __flash const char _msg_logging_after_boot[] = "Zapis po wlacz.";
+__flash const char _msg_settings[] = "Ustawienia";
 __flash const char _msg_back[] = "< Powrot";
 __flash const char _msg_auto_pause[] = "Autopauza";
 __flash const char _msg_auto_pause_time[] = "Autopauza czas";
@@ -124,7 +125,8 @@ __flash const struct menu_pos settings_menu_list[] = {
 	{
 		.type = MENU_TYPE_DISPLAY,
 		.display_type = MENU_DISPLAY_TYPE_STRING,
-		.name = _msg_back,
+		.name = _msg_settings,
+		.value = _msg_back,
 		.allow_back = 1,
 	},
 	{
