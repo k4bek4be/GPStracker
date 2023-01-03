@@ -272,6 +272,8 @@ void close_files(unsigned char flush_logs) {
 }
 
 static inline void auto_unpause(void) {
+	if (!System.tracking_auto_paused)
+		return;
 	System.tracking_auto_paused = 0;
 	beep(50, 4);
 }
