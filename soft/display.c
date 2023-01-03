@@ -98,6 +98,21 @@ void battery_state_display(void) {
 	};
 }
 
+static inline void disp_line(unsigned char i, __flash const char *text) {
+	switch(i) {
+		case 2: strcpy_P(disp.line2, text); break;
+		case 1: strcpy_P(disp.line1, text); break;
+	}
+}
+
+void disp_line1(__flash const char *text) {
+	disp_line(1, text);
+}
+
+void disp_line2(__flash const char *text) {
+	disp_line(2, text);
+}
+
 __flash const char _gps_wait[] =		"Czekam na GPS...";
 __flash const char _gps_ok[] =			"GPS OK!";
 __flash const char _card_ok[] =			"Karta OK!";
@@ -124,47 +139,47 @@ __flash const char _sat_count_low[] = "Za malo satelit";
 void display_event(unsigned char event) { /* overrides display with current messages */
 	switch (event) {
 		case DISPLAY_EVENT_STARTUP:
-			strcpy_P(disp.line1, _starting);
+			disp_line1(_starting);
 			break;
 		case DISPLAY_EVENT_LOW_BATTERY:
-			strcpy_P(disp.line2, _battery_low);
+			disp_line2(_battery_low);
 		/* fall through */
 		case DISPLAY_EVENT_POWEROFF:
-			strcpy_P(disp.line1, _shutting_down);
+			disp_line1(_shutting_down);
 			break;
 		case DISPLAY_EVENT_INITIALIZED:
-			strcpy_P(disp.line1, PSTR("Start"));
+			disp_line1(PSTR("Start"));
 			switch(System.status){
 				case STATUS_NO_POWER: case STATUS_OK: case STATUS_NO_GPS: disp.line2[0] = '\0'; break;
-				case STATUS_NO_DISK:			strcpy_P(disp.line2, _no_card); break;
-				case STATUS_DISK_ERROR:			strcpy_P(disp.line2, _card_error); break;
-				case STATUS_FILE_WRITE_ERROR:	strcpy_P(disp.line2, _write_error); break;
-				case STATUS_FILE_SYNC_ERROR:	strcpy_P(disp.line2, _fat_write_error); break;
-				case STATUS_FILE_CLOSE_ERROR:	strcpy_P(disp.line2, _file_close_error); break;
-				case STATUS_FILE_OPEN_ERROR:	strcpy_P(disp.line2, _file_open_error); break;
+				case STATUS_NO_DISK:			disp_line2(_no_card); break;
+				case STATUS_DISK_ERROR:			disp_line2(_card_error); break;
+				case STATUS_FILE_WRITE_ERROR:	disp_line2(_write_error); break;
+				case STATUS_FILE_SYNC_ERROR:	disp_line2(_fat_write_error); break;
+				case STATUS_FILE_CLOSE_ERROR:	disp_line2(_file_close_error); break;
+				case STATUS_FILE_OPEN_ERROR:	disp_line2(_file_open_error); break;
 			}
 			break;
 		case DISPLAY_EVENT_CARD_INITIALIZED:
-			strcpy_P(disp.line1, _card_ok);
-			strcpy_P(disp.line2, _gps_wait);
+			disp_line1(_card_ok);
+			disp_line2(_gps_wait);
 			break;
 		case DISPLAY_EVENT_FILE_CLOSED:
-			strcpy_P(disp.line2, _files_closed);
+			disp_line2(_files_closed);
 			break;
 		case DISPLAY_EVENT_FILE_OPEN:
-			strcpy_P(disp.line2, _files_open);
+			disp_line2(_files_open);
 			break;
 		case DISPLAY_EVENT_TRACKING_PAUSED:
-			strcpy_P(disp.line2, _tracking_paused);
+			disp_line2(_tracking_paused);
 			break;
 		case DISPLAY_EVENT_TRACKING_RESUMED:
-			strcpy_P(disp.line2, _tracking_resumed);
+			disp_line2(_tracking_resumed);
 			break;
 		case DISPLAY_EVENT_POINT_SAVED:
-			strcpy_P(disp.line2, _point_saved);
+			disp_line2(_point_saved);
 			break;
 		case DISPLAY_EVENT_POINT_NOT_SAVED:
-			strcpy_P(disp.line2, _point_not_saved);
+			disp_line2(_point_not_saved);
 			break;
 	}
 	display_refresh(1);
@@ -173,29 +188,29 @@ void display_event(unsigned char event) { /* overrides display with current mess
 void disp_func_main_default(void) {
 	if (FLAGS & F_FILEOPEN) {
 		if (System.tracking_paused) {
-			strcpy_P(disp.line1, _logging_paused);
+			disp_line1(_logging_paused);
 		} else if (System.tracking_auto_paused) {
-			strcpy_P(disp.line1, _logging_auto_paused);
+			disp_line1(_logging_auto_paused);
 		} else {
-			strcpy_P(disp.line1, _logging_active);
+			disp_line1(_logging_active);
 		}
 	} else
-		strcpy_P(disp.line1, _card_ok);
+		disp_line1(_card_ok);
 
 	if (FLAGS & F_GPSOK) {
 		if (System.sat_count_low)
-			strcpy_P(disp.line2, _sat_count_low);
+			disp_line2(_sat_count_low);
 		else
-			strcpy_P(disp.line2, _gps_ok);
+			disp_line2(_gps_ok);
 	} else {
-		strcpy_P(disp.line2, _gps_wait);
+		disp_line2(_gps_wait);
 	}
 }
 
 void disp_func_coord(void) {
 	if (System.location_valid == LOC_INVALID) {
-		strcpy_P(disp.line1, PSTR("??? N/S"));
-		strcpy_P(disp.line2, PSTR("??? E/W"));
+		disp_line1(PSTR("??? N/S"));
+		disp_line2(PSTR("??? E/W"));
 		return;
 	}
 	xsprintf(disp.line1, PSTR("%2.6f%c"), (location.lat < 0)?(-location.lat):location.lat, (location.lat < 0)?'S':'N');
@@ -204,7 +219,7 @@ void disp_func_coord(void) {
 
 void disp_func_ele_sat(void) {
 	if (System.location_valid == LOC_INVALID) {
-		strcpy_P(disp.line1, PSTR("ele = ???"));
+		disp_line1(PSTR("ele = ???"));
 	} else {
 		xsprintf(disp.line1, PSTR("ele = %.1fm"), location.alt);
 	}
@@ -218,23 +233,23 @@ void disp_distance_and_time(void) {
 	if (utc > 0 && System.time_start > 0) {
 		xsprintf(disp.line2, PSTR("t=%u s"), (unsigned int)(utc - System.time_start));
 	} else {
-		strcpy_P(disp.line2, PSTR("Czas nieznany"));
+		disp_line2(PSTR("Czas nieznany"));
 	}
 }
 
 void disp_speed(void) {
-	strcpy_P(disp.line1, PSTR("Predkosc:"));
+	disp_line1(PSTR("Predkosc:"));
 	if (utc > 0 && System.time_start > 0) {
 		xsprintf(disp.line2, PSTR("%.2f km/h"), (float)System.distance / (float)(utc - System.time_start) * 0.036);
 	} else {
-		strcpy_P(disp.line2, PSTR("nieznana"));
+		disp_line2(PSTR("nieznana"));
 	}
 }
 
 void disp_time(void) {
 	if (utc == 0) {
-		strcpy_P(disp.line1, PSTR("?"));
-		strcpy_P(disp.line2, PSTR("?"));
+		disp_line1(PSTR("?"));
+		disp_line2(PSTR("?"));
 		return;
 	}
 	time_t time = utc;
@@ -246,11 +261,11 @@ void disp_time(void) {
 }
 
 void disp_func_temperature(void) {
-	strcpy_P(disp.line1, PSTR("Temperatura"));
+	disp_line1(PSTR("Temperatura"));
 	if (System.temperature_ok) {
 		xsprintf(disp.line2, PSTR("%.1f stC"), System.temperature);
 	} else {
-		strcpy_P(disp.line2, PSTR("Blad!"));
+		disp_line2(PSTR("Blad!"));
 	}
 }
 
