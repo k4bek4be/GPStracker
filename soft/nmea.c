@@ -204,6 +204,20 @@ static void gp_gga_parse(const char *str) {
 
 	location.time = utc; /* parsed from RMC */
 }
+
+static void gp_vtg_parse(const char *str) {
+	const char *p;
+	double speed;
+	
+	p = gp_col(str, 9);
+	if (*p == 'N') /* Not valid */
+		return;
+	
+	p = gp_col(str, 7); /* speed in km/h */
+	xatof(&p, &speed);
+	System.speed = speed+0.5;
+}
+
 /*$PMTK355*31<CR><LF>
 Return $PMTK001,355,3,1,0,0*2E “$PMTK001,355,3,GLON_Enable,BEIDOU_Enable,GALILEO_Enable”
 The GLONASS search mode is enabled. */
@@ -278,6 +292,10 @@ time_t gps_parse(const char *str) {	/* Get all required data from NMEA sentences
 	}
 	if (!gp_comp(str, PSTR("GPGGA")) || !gp_comp(str, PSTR("GNGGA")) || !gp_comp(str, PSTR("BDGGA")) || !gp_comp(str, PSTR("GAGGA"))) {
 		gp_gga_parse(str);
+		return 0;
+	}
+	if (!gp_comp(str, PSTR("GPVTG")) || !gp_comp(str, PSTR("GNVTG"))) {
+		gp_vtg_parse(str);
 		return 0;
 	}
 	if (!System.gps_initialized && !gp_comp(str, PSTR("PMTK011"))) {
