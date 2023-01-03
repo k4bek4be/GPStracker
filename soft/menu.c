@@ -43,6 +43,13 @@ void settings_display_u8_meters(unsigned char index) {
 	make_arrows();
 }
 
+void settings_display_u8_kmh(unsigned char index) {
+	unsigned char val = System.conf.conf_u8[index];
+	
+	xsprintf(disp.line2, PSTR("%d km/h"), (int)val);
+	make_arrows();
+}
+
 void settings_change_bool(struct menu_pos pos, unsigned char k) {
 	unsigned char index = pos.index;
 	unsigned char val = get_flag(index);
@@ -133,6 +140,10 @@ unsigned char menu(void) {
 			break;
 		case MENU_DISPLAY_TYPE_U8_SECONDS:
 			settings_display_u8_seconds(pos.index);
+			display_line1_as_string = 1;
+			break;
+		case MENU_DISPLAY_TYPE_U8_KMH:
+			settings_display_u8_kmh(pos.index);
 			display_line1_as_string = 1;
 			break;
 		default:	/* bad data */

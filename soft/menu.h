@@ -14,6 +14,7 @@
 #define MENU_DISPLAY_TYPE_NAME_CSFUNCTION	4
 #define MENU_DISPLAY_TYPE_U8_METERS	5
 #define MENU_DISPLAY_TYPE_U8_SECONDS	6
+#define MENU_DISPLAY_TYPE_U8_KMH	7
 
 #define menu_push(x) { if(__menu_num<DATA_NUM) __menu_data[__menu_num++] = x; } // stack commands
 #define menu_pop() --__menu_num

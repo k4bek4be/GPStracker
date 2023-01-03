@@ -271,6 +271,41 @@ void close_files(unsigned char flush_logs) {
 	disk_ioctl(0, CTRL_POWER, 0);
 }
 
+static inline void auto_unpause(void) {
+	System.tracking_auto_paused = 0;
+	beep(50, 4);
+}
+
+static inline void auto_pause_activate(void) {
+	System.tracking_auto_paused = 1;
+	beep(50, 3);
+}
+
+static inline void auto_pause_process(void) {
+	if (System.tracking_paused || !get_flag(CONFFLAG_AUTO_PAUSE)) { /* remove auto-pause */
+		System.tracking_auto_paused = 0;
+		auto_pause.prev_distance = System.distance;
+		auto_pause.point_counter = 0;
+	} else {
+		if (System.speed >= System.conf.auto_pause_speed) { /* immediately unpause when set speed is exceeded */
+			auto_pause.point_counter = 0;
+			auto_unpause();
+		} else {
+			if (++auto_pause.point_counter >= System.conf.auto_pause_time) {
+				auto_pause.point_counter = 0;
+				if ((System.distance - auto_pause.prev_distance)/100 > System.conf.auto_pause_dist) {
+					if (System.tracking_auto_paused)
+						auto_unpause(); /* unpause when distance not too low */
+				} else {
+					if (!System.tracking_auto_paused)
+						auto_pause_activate(); /* pause otherwise */
+				}
+				auto_pause.prev_distance = System.distance;
+			}
+		}
+	}
+}
+
 __flash const char __open_msg[] = "Open %s\r\n";
 
 /*-----------------------------------------------------------------------*/
@@ -411,28 +446,7 @@ int main (void)
 				}
 				if (System.location_valid == LOC_VALID_NEW) { /* a new point */
 					gpx_process_point(&location, &gpx_file);
-					/* auto-pausing */
-					if (System.tracking_paused || !get_flag(CONFFLAG_AUTO_PAUSE)) {
-						System.tracking_auto_paused = 0;
-						auto_pause.prev_distance = System.distance;
-						auto_pause.point_counter = 0;
-					} else {
-						if (++auto_pause.point_counter >= System.conf.auto_pause_time) {
-							auto_pause.point_counter = 0;
-							if ((System.distance - auto_pause.prev_distance)/100 > System.conf.auto_pause_dist) {
-								if (System.tracking_auto_paused) {
-									System.tracking_auto_paused = 0;
-									beep(50, 4);
-								}
-							} else {
-								if (!System.tracking_auto_paused) {
-									System.tracking_auto_paused = 1;
-									beep(50, 3);
-								}
-							}
-							auto_pause.prev_distance = System.distance;
-						}
-					}					
+					auto_pause_process();				
 				}
 				wdt_reset();
 				if (FLAGS & F_SYNC) {

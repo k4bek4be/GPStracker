@@ -8,8 +8,9 @@
 #define CONF_U8_AUTO_PAUSE_TIME	2
 #define CONF_U8_AUTO_PAUSE_DIST	3
 #define CONF_U8_MIN_SATS	4
+#define CONF_U8_AUTO_PAUSE_SPEED	5
 
-#define CONF_U8_LAST		4
+#define CONF_U8_LAST		5
 
 /* flags list - max 31 */
 #define CONFFLAG_DISABLE_FILTERS	0
@@ -36,6 +37,7 @@ struct config_s {
 			unsigned char auto_pause_time;	// 2
 			unsigned char auto_pause_dist;	// 3
 			unsigned char min_sats;		// 4
+			unsigned char auto_pause_speed;	// 5
 		};
 	};
 	unsigned char flags[4];
