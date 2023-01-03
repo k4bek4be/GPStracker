@@ -288,23 +288,23 @@ static inline void auto_pause_process(void) {
 		System.tracking_auto_paused = 0;
 		auto_pause.prev_distance = System.distance;
 		auto_pause.point_counter = 0;
+		return;
+	}
+	if (System.speed >= System.conf.auto_pause_speed) { /* immediately unpause when set speed is exceeded */
+		auto_pause.point_counter = 0;
+		auto_unpause();
 	} else {
-		if (System.speed >= System.conf.auto_pause_speed) { /* immediately unpause when set speed is exceeded */
-			auto_pause.point_counter = 0;
-			auto_unpause();
+		if (++auto_pause.point_counter < System.conf.auto_pause_time)
+			return;
+		auto_pause.point_counter = 0;
+		if ((System.distance - auto_pause.prev_distance)/100 > System.conf.auto_pause_dist) {
+			if (System.tracking_auto_paused)
+				auto_unpause(); /* unpause when distance not too low */
 		} else {
-			if (++auto_pause.point_counter >= System.conf.auto_pause_time) {
-				auto_pause.point_counter = 0;
-				if ((System.distance - auto_pause.prev_distance)/100 > System.conf.auto_pause_dist) {
-					if (System.tracking_auto_paused)
-						auto_unpause(); /* unpause when distance not too low */
-				} else {
-					if (!System.tracking_auto_paused)
-						auto_pause_activate(); /* pause otherwise */
-				}
-				auto_pause.prev_distance = System.distance;
-			}
+			if (!System.tracking_auto_paused)
+				auto_pause_activate(); /* pause otherwise */
 		}
+		auto_pause.prev_distance = System.distance;
 	}
 }
 
